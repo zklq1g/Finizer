@@ -6,7 +6,7 @@ import { formatINR } from "../../utils/format";
 export interface LogReceiptData {
   poId: string;
   amount: number;
-  challanNumber: string;
+  challanNumber?: string;
   receiptFile: File | null;
   notes: string;
   actor: string;
@@ -33,7 +33,6 @@ export default function LogReceiptSheet({
   onSave,
 }: LogReceiptSheetProps) {
   const [amount, setAmount] = useState<string>("");
-  const [challanNumber, setChallanNumber] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -94,7 +93,6 @@ export default function LogReceiptSheet({
       await onSave({
         poId: po.id,
         amount: parsedAmount,
-        challanNumber: challanNumber.trim(),
         receiptFile,
         notes: notes.trim(),
         actor: "Owner (Main Counter)", // Attribution for forensic audit log
@@ -102,7 +100,6 @@ export default function LogReceiptSheet({
 
       // Reset & Close
       setAmount("");
-      setChallanNumber("");
       setNotes("");
       setReceiptFile(null);
       onClose();
@@ -199,27 +196,7 @@ export default function LogReceiptSheet({
             )}
           </div>
 
-          {/* C. Bilty / LR Number (Challan Field) */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-[#120D26]">
-              Bilty / LR / Delivery Challan #
-            </label>
-            <div className="bg-[#F8F9FA] rounded-2xl p-3 border border-[#F2F0F5] focus-within:border-[#5F33E1] transition-all">
-              <input
-                type="text"
-                placeholder="e.g. LR-94810-DEL / Challan #412"
-                value={challanNumber}
-                onChange={(e) => setChallanNumber(e.target.value)}
-                disabled={isSubmitting}
-                className="w-full text-xs font-semibold text-[#120D26] bg-transparent outline-none uppercase tracking-wider placeholder:normal-case placeholder:tracking-normal placeholder:font-normal placeholder:text-[#99969E]"
-              />
-            </div>
-            <p className="text-[10px] text-[#99969E]">
-              Required for proof in case of transporter dispute or damaged goods.
-            </p>
-          </div>
-
-          {/* D. Delivery Notes */}
+          {/* C. Delivery Notes */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-[#120D26]">
               Notes / Condition of Goods (Optional)
@@ -227,7 +204,7 @@ export default function LogReceiptSheet({
             <div className="bg-[#F8F9FA] rounded-2xl p-3 border border-[#F2F0F5] focus-within:border-[#5F33E1] transition-all">
               <input
                 type="text"
-                placeholder="e.g. 2 boxes water damaged, driver noted on bilty"
+                placeholder="e.g. 2 boxes damaged, batch verified"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 disabled={isSubmitting}
@@ -236,7 +213,7 @@ export default function LogReceiptSheet({
             </div>
           </div>
 
-          {/* E. Bilty Photo Snap (capture="environment") */}
+          {/* D. Receipt Photo Snap (capture="environment") */}
           <div className="pt-1">
             <input
               type="file"
@@ -266,12 +243,12 @@ export default function LogReceiptSheet({
               {receiptFile ? (
                 <>
                   <CheckIcon className="w-4 h-4 text-[#16A34A] shrink-0" />
-                  <span>Bilty Photo Attached (Tap to remove)</span>
+                  <span>Receipt Photo Attached (Tap to remove)</span>
                 </>
               ) : (
                 <>
                   <CameraIcon className="w-4 h-4 shrink-0" />
-                  <span>Snap Bilty / Signed Challan</span>
+                  <span>Snap Delivery Receipt / Photo</span>
                 </>
               )}
             </button>

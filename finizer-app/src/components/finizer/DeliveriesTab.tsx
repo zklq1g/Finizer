@@ -21,7 +21,6 @@ export interface PurchaseOrder {
   receivedAmount: number;
   status: "PENDING" | "PARTIAL" | "COMPLETE";
   deliveryNote: string;
-  challanNumber?: string;
 }
 
 // Generate realistic date strings relative to today
@@ -41,7 +40,6 @@ const SAMPLE_ORDERS: PurchaseOrder[] = [
     receivedAmount: 1500000,
     status: "PARTIAL",
     deliveryNote: "₹5,00,000 pending parcel in transit from Surat warehouse",
-    challanNumber: "LR-88291-SRT",
   },
   {
     id: "po-2",
@@ -52,7 +50,6 @@ const SAMPLE_ORDERS: PurchaseOrder[] = [
     receivedAmount: 650000,
     status: "COMPLETE",
     deliveryNote: "Fully delivered & verified on 19 Oct",
-    challanNumber: "CH-1092-FMCG",
   },
   {
     id: "po-3",
@@ -95,19 +92,16 @@ export default function DeliveriesTab() {
         const newStatus =
           newReceived >= order.expectedAmount ? "COMPLETE" : "PARTIAL";
 
-        const noteSnippet = data.challanNumber
-          ? `Bilty #${data.challanNumber}`
-          : "Parcel logged";
-
         return {
           ...order,
           receivedAmount: newReceived,
           status: newStatus,
-          challanNumber: data.challanNumber || order.challanNumber,
           deliveryNote:
             newStatus === "COMPLETE"
-              ? `Fully received & verified (${noteSnippet})`
-              : `Partial parcel received (+${formatINR(data.amount)}) via ${noteSnippet}`,
+              ? "All parcels fully received & verified"
+              : `Partial parcel received (+${formatINR(data.amount)})${
+                  data.notes ? `: ${data.notes}` : ""
+                }`,
         };
       })
     );
@@ -285,17 +279,10 @@ export default function DeliveriesTab() {
                   </div>
                 </div>
 
-                {/* Delivery Note & Challan Tag */}
+                {/* Delivery Note */}
                 <div className="text-[11px] text-[#524E59] bg-[#F8F9FA] p-2.5 rounded-xl mb-3 flex items-start gap-2">
                   <BoxIcon className="w-4 h-4 text-[#524E59] shrink-0 mt-0.5" />
-                  <div className="min-w-0 flex-1">
-                    <p>{order.deliveryNote}</p>
-                    {order.challanNumber && (
-                      <p className="text-[10px] text-[#99969E] font-mono mt-0.5 font-bold">
-                        Bilty/LR: {order.challanNumber}
-                      </p>
-                    )}
-                  </div>
+                  <p className="min-w-0 flex-1">{order.deliveryNote}</p>
                 </div>
 
                 {/* Action: 1-Tap Trigger for LogReceiptSheet */}
@@ -314,7 +301,7 @@ export default function DeliveriesTab() {
         </div>
       )}
 
-      {/* 10/10 Log Receipt Bottom Sheet */}
+      {/* Log Receipt Bottom Sheet */}
       <LogReceiptSheet
         po={
           selectedPO

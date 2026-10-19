@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { WalletIcon, ReceiptIcon } from "../icons";
+import { WalletIcon, ReceiptIcon, TrendUpIcon, CardSendIcon, PrinterIcon, ShieldTickIcon, ChevronRightIcon } from "../icons";
 
 interface SettingsTabProps {
   onOpenActivityLog: () => void;
@@ -39,8 +39,8 @@ export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
           className="w-full bg-white rounded-2xl p-4 flex items-center justify-between border border-[#F2F0F5] hover:border-gray-300 transition-all text-left shadow-sm group"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[#EDE8FB] flex items-center justify-center text-lg">
-              📊
+            <div className="w-11 h-11 rounded-xl bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1]">
+              <TrendUpIcon className="w-5 h-5 text-[#5F33E1]" />
             </div>
             <div>
               <p className="text-xs font-bold text-[#120D26] group-hover:text-[#5F33E1] transition-colors">
@@ -51,17 +51,17 @@ export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
               </p>
             </div>
           </div>
-          <span className="text-gray-400 group-hover:text-[#5F33E1] transition-colors">→</span>
+          <ChevronRightIcon className="w-5 h-5 text-gray-400 group-hover:text-[#5F33E1] transition-colors shrink-0" />
         </button>
 
         {/* 2. Export for CA */}
         <button
-          onClick={() => showToast("✓ Exporting CA Excel sheet with Vendor GST numbers...")}
+          onClick={() => showToast("Exporting CA Excel sheet with Vendor GST numbers...")}
           className="w-full bg-white rounded-2xl p-4 flex items-center justify-between border border-[#F2F0F5] hover:border-gray-300 transition-all text-left shadow-sm group"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[#F5F2FF] flex items-center justify-center text-lg">
-              📥
+            <div className="w-11 h-11 rounded-xl bg-[#F5F2FF] flex items-center justify-center text-[#5F33E1]">
+              <CardSendIcon className="w-5 h-5 text-[#5F33E1]" />
             </div>
             <div>
               <p className="text-xs font-bold text-[#120D26] group-hover:text-[#5F33E1] transition-colors">
@@ -72,17 +72,17 @@ export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
               </p>
             </div>
           </div>
-          <span className="text-gray-400 group-hover:text-[#5F33E1] transition-colors">→</span>
+          <ChevronRightIcon className="w-5 h-5 text-gray-400 group-hover:text-[#5F33E1] transition-colors shrink-0" />
         </button>
 
         {/* 3. Print Daily Ledger */}
         <button
-          onClick={() => showToast("✓ Generating Daily PDF print sheet for physical binder...")}
+          onClick={() => showToast("Generating Daily PDF print sheet for physical binder...")}
           className="w-full bg-white rounded-2xl p-4 flex items-center justify-between border border-[#F2F0F5] hover:border-gray-300 transition-all text-left shadow-sm group"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[#F5F2FF] flex items-center justify-center text-lg">
-              🖨️
+            <div className="w-11 h-11 rounded-xl bg-[#F5F2FF] flex items-center justify-center text-[#5F33E1]">
+              <PrinterIcon className="w-5 h-5 text-[#5F33E1]" />
             </div>
             <div>
               <p className="text-xs font-bold text-[#120D26] group-hover:text-[#5F33E1] transition-colors">
@@ -93,7 +93,7 @@ export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
               </p>
             </div>
           </div>
-          <span className="text-gray-400 group-hover:text-[#5F33E1] transition-colors">→</span>
+          <ChevronRightIcon className="w-5 h-5 text-gray-400 group-hover:text-[#5F33E1] transition-colors shrink-0" />
         </button>
       </div>
 
@@ -121,7 +121,7 @@ export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
               </p>
             </div>
           </div>
-          <span className="text-gray-400 group-hover:text-[#5F33E1] transition-colors">→</span>
+          <ChevronRightIcon className="w-5 h-5 text-gray-400 group-hover:text-[#5F33E1] transition-colors shrink-0" />
         </button>
 
         {/* Manage Categories */}
@@ -142,7 +142,7 @@ export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
               </p>
             </div>
           </div>
-          <span className="text-gray-400 group-hover:text-[#5F33E1] transition-colors">→</span>
+          <ChevronRightIcon className="w-5 h-5 text-gray-400 group-hover:text-[#5F33E1] transition-colors shrink-0" />
         </button>
 
         {/* Partner Trust Quick Access */}
@@ -151,8 +151,8 @@ export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
           className="w-full bg-[#F5F2FF] rounded-2xl p-4 flex items-center justify-between border border-[#EDE8FB] hover:border-[#5F33E1] transition-all text-left shadow-sm group"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[#EDE8FB] flex items-center justify-center text-lg">
-              🛡️
+            <div className="w-11 h-11 rounded-xl bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1]">
+              <ShieldTickIcon className="w-5 h-5 text-[#5F33E1]" />
             </div>
             <div>
               <p className="text-xs font-bold text-[#5F33E1]">
@@ -163,7 +163,7 @@ export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
               </p>
             </div>
           </div>
-          <span className="text-[#5F33E1]">→</span>
+          <ChevronRightIcon className="w-5 h-5 text-[#5F33E1] shrink-0" />
         </button>
       </div>
     </div>

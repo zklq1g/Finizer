@@ -238,3 +238,65 @@ export const TrashIcon: React.FC<{ className?: string }> = ({ className }) => (
     <path d="M9.5 12v6m5-6v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
   </svg>
 );
+
+/** Printer — daily ledger printing, PDF generation */
+export const PrinterIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    {/* Bulk: printer body */}
+    <path d="M7 5V3.5C7 2.67 7.67 2 8.5 2h7c.83 0 1.5.67 1.5 1.5V5h2.5c1.38 0 2.5 1.12 2.5 2.5v7c0 1.38-1.12 2.5-2.5 2.5H17v3.5c0 .83-.67 1.5-1.5 1.5h-7c-.83 0-1.5-.67-1.5-1.5V17H4.5C3.12 17 2 15.88 2 14.5v-7C2 6.12 3.12 5 4.5 5H7z" opacity="0.4" />
+    {/* Detail: paper output + indicator dot */}
+    <path d="M7 13h10v7.5c0 .28-.22.5-.5.5h-9a.5.5 0 0 1-.5-.5V13z" />
+    <path d="M7 3.5c0-.28.22-.5.5-.5h9c.28 0 .5.22.5.5V5H7V3.5z" />
+    <circle cx="18" cy="9" r="1" />
+  </svg>
+);
+
+/** Lock — immutable record indicator, security tag */
+export const LockIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    {/* Bulk: lock body */}
+    <path d="M18.5 9.5h-13C4.12 9.5 3 10.62 3 12v7c0 1.38 1.12 2.5 2.5 2.5h13c1.38 0 2.5-1.12 2.5-2.5v-7c0-1.38-1.12-2.5-2.5-2.5z" opacity="0.4" />
+    {/* Detail: shackle + keyhole */}
+    <path d="M7 9.5V7c0-2.76 2.24-5 5-5s5 2.24 5 5v2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+    <circle cx="12" cy="16" r="1.5" />
+    <path d="M12 17.5v1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+  </svg>
+);
+
+/** Alert Triangle — warning banners, suspicious activity, overdue alerts */
+export const AlertTriangleIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    {/* Bulk: triangle body */}
+    <path d="M21.76 15.92l-6.85-11.8c-.97-1.67-2.14-2.52-3.3-2.08-.52.2-.99.64-1.38 1.3L3.38 15.14c-.84 1.45-.94 2.85-.27 3.85.66 1 2 1.55 3.69 1.55h10.4c1.69 0 3.03-.55 3.69-1.55.67-1 .57-2.4-.27-3.85l-.86-1.22z" opacity="0.4" />
+    {/* Detail: exclamation mark */}
+    <path d="M12 9v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+    <circle cx="12" cy="16" r="0.8" />
+  </svg>
+);
+
+/** Check / Tick — verified, success confirmation, receipt attached */
+export const CheckIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    {/* Bulk: circle background */}
+    <path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10 10-4.49 10-10S17.51 2 12 2z" opacity="0.4" />
+    {/* Detail: checkmark */}
+    <path d="M7.75 12l2.83 2.83 5.67-5.66" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+  </svg>
+);
+
+/** Close / X — dismiss modals, remove items, close sheets */
+export const CloseIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    {/* Bulk: circle background */}
+    <path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10 10-4.49 10-10S17.51 2 12 2z" opacity="0.4" />
+    {/* Detail: X strokes */}
+    <path d="M9.17 14.83l5.66-5.66M14.83 14.83L9.17 9.17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+  </svg>
+);
+
+/** Chevron Right — menu disclosure, navigation arrow, list action */
+export const ChevronRightIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M9 18l6-6-6-6" />
+  </svg>
+);

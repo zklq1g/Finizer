@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import EmptyState from "./EmptyState";
-import { DocumentIcon } from "../icons";
+import { DocumentIcon, PrinterIcon, CheckIcon } from "../icons";
 
 interface EntryRecord {
   id: string;
@@ -73,14 +73,14 @@ export default function EntriesTab() {
             title="Print Daily Ledger"
             className="w-10 h-10 rounded-2xl bg-white border border-[#F2F0F5] hover:bg-gray-50 shadow-sm flex items-center justify-center text-[#120D26] hover:text-[#5F33E1] transition-colors"
           >
-            <span className="text-base">🖨️</span>
+            <PrinterIcon className="w-5 h-5" />
           </button>
         </div>
       </div>
 
       {printSuccess && (
         <div className="bg-[#DCFCE7] text-[#16A34A] text-xs font-bold p-3 rounded-2xl flex items-center justify-between border border-[#BBF7D0] animate-fade-in">
-          <span>✓ Daily ledger PDF generated. Ready for printer.</span>
+          <span className="flex items-center gap-1.5"><CheckIcon className="w-4 h-4 text-[#16A34A]" /> Daily ledger PDF generated. Ready for printer.</span>
         </div>
       )}
 

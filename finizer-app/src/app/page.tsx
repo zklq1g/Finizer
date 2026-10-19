@@ -8,6 +8,7 @@ import {
   ProfileIcon,
   ShieldTickIcon,
   AddIcon,
+  ArrowDownIcon,
 } from "../components/icons";
 
 // Finizer Core Tabs
@@ -77,7 +78,7 @@ export default function FinizerApp() {
           {/* Left: Store Selector */}
           <div className="flex items-center gap-1.5 cursor-pointer">
             <h1 className="text-base font-black text-[#120D26] tracking-tight">Main Store</h1>
-            <span className="text-[10px] text-gray-400">▾</span>
+            <ArrowDownIcon className="w-3.5 h-3.5 text-gray-400" />
           </div>
 
           {/* Center: Human Sync Status */}

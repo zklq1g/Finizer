@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { WalletIcon, BoxIcon, TrendUpIcon } from "../icons";
+import { WalletIcon, BoxIcon, TrendUpIcon, AlertTriangleIcon, ChevronRightIcon } from "../icons";
 
 interface TransactionItem {
   id: string;
@@ -83,7 +83,7 @@ export default function HomeTab({
         className="w-full bg-[#FEF3C7] border border-[#FDE68A] hover:bg-[#FDE68A]/70 text-[#92400E] rounded-2xl p-4 flex items-center justify-between text-left transition-all active:scale-[0.99] shadow-sm"
       >
         <div className="flex items-center gap-3">
-          <span className="text-xl">⚠️</span>
+          <AlertTriangleIcon className="w-5 h-5 text-[#92400E] shrink-0" />
           <div>
             <p className="text-xs font-extrabold text-[#92400E]">
               ₹5,00,000 Delivery Pending
@@ -93,7 +93,7 @@ export default function HomeTab({
             </p>
           </div>
         </div>
-        <span className="text-xs font-bold text-[#B45309]">View →</span>
+        <span className="flex items-center gap-1 text-xs font-bold text-[#B45309]">View <ChevronRightIcon className="w-3.5 h-3.5" /></span>
       </button>
 
       {/* 3. Recent Entries: Just the last 5 */}

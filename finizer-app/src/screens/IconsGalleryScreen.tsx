@@ -46,6 +46,12 @@ const financeIcons: IconItem[] = [
   { name: "FilterIcon",           component: Icons.FilterIcon,           tag: "Ledger Filters",   iconColor: "text-[#7C5CE8]", bgColor: "bg-[#EDE8FB]" },
   { name: "SearchIcon",           component: Icons.SearchIcon,           tag: "Ledger Search",    iconColor: "text-[#5F33E1]", bgColor: "bg-[#EDE8FB]" },
   { name: "TrashIcon",            component: Icons.TrashIcon,            tag: "Soft Delete",      iconColor: "text-[#2D1A7A]", bgColor: "bg-[#EDE8FB]" },
+  { name: "PrinterIcon",          component: Icons.PrinterIcon,          tag: "Print Ledger",     iconColor: "text-[#5F33E1]", bgColor: "bg-[#EDE8FB]" },
+  { name: "LockIcon",             component: Icons.LockIcon,             tag: "Security / Audit", iconColor: "text-[#4A27B3]", bgColor: "bg-[#EDE8FB]" },
+  { name: "AlertTriangleIcon",    component: Icons.AlertTriangleIcon,    tag: "Alerts / Warnings",iconColor: "text-[#7C5CE8]", bgColor: "bg-[#F5F2FF]" },
+  { name: "CheckIcon",            component: Icons.CheckIcon,            tag: "Verified / Success",iconColor: "text-[#5F33E1]",bgColor: "bg-[#EDE8FB]" },
+  { name: "CloseIcon",            component: Icons.CloseIcon,            tag: "Dismiss Modal",    iconColor: "text-[#120D26]", bgColor: "bg-[#F5F2FF]" },
+  { name: "ChevronRightIcon",     component: Icons.ChevronRightIcon,     tag: "Menu Action",      iconColor: "text-[#5F33E1]", bgColor: "bg-[#EDE8FB]" },
 ];
 
 type FilterTab = "all" | "figma" | "finance";
@@ -131,9 +137,9 @@ export default function IconsGalleryScreen() {
         {/* Filter Pills */}
         <div className="flex gap-2 mb-6">
           {[
-            { id: "all",     label: "All (27)" },
+            { id: "all",     label: "All (33)" },
             { id: "figma",   label: "Figma UI (14)" },
-            { id: "finance", label: "Financial (13)" },
+            { id: "finance", label: "Financial & Ops (19)" },
           ].map((tab) => (
             <button
               key={tab.id}

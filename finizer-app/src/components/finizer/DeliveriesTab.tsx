@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import EmptyState from "./EmptyState";
-import { TruckIcon, BoxIcon } from "../icons";
+import { TruckIcon, BoxIcon, CardReceiveIcon } from "../icons";
 
 interface PurchaseOrder {
   id: string;
@@ -218,8 +218,8 @@ export default function DeliveriesTab() {
                 </div>
 
                 {/* Delivery Note */}
-                <p className="text-[11px] text-[#524E59] bg-[#F8F9FA] p-2.5 rounded-xl mb-3">
-                  📦 {order.deliveryNote}
+                <p className="text-[11px] text-[#524E59] bg-[#F8F9FA] p-2.5 rounded-xl mb-3 flex items-center gap-1.5">
+                  <BoxIcon className="w-4 h-4 text-[#524E59] shrink-0" /> {order.deliveryNote}
                 </p>
 
                 {/* Action: Log Received Parcel */}
@@ -260,7 +260,7 @@ export default function DeliveriesTab() {
                         }}
                         className="w-full bg-[#EDE8FB] hover:bg-[#E1D7FA] text-[#5F33E1] font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5"
                       >
-                        <span>📥 Log Received Parcel</span>
+                        <span className="flex items-center gap-1.5"><CardReceiveIcon className="w-4 h-4" /> Log Received Parcel</span>
                       </button>
                     )}
                   </div>

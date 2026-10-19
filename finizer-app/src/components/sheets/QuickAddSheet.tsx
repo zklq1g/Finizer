@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { CameraIcon } from "../icons";
+import { CameraIcon, CloseIcon, CheckIcon } from "../icons";
 
 export interface TransactionData {
   type: "EXPENSE" | "INCOME";
@@ -155,9 +155,9 @@ export default function QuickAddSheet({
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800 text-sm font-bold"
+              className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800"
             >
-              ✕
+              <CloseIcon className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -324,8 +324,8 @@ export default function QuickAddSheet({
               }`}
             >
               <CameraIcon className="w-4 h-4 shrink-0" />
-              <span>
-                {receiptFile ? "✓ Receipt Added (Tap to remove)" : "📷 Snap Receipt (Optional)"}
+              <span className="flex items-center gap-1">
+                {receiptFile ? <><CheckIcon className="w-3.5 h-3.5 text-[#16A34A]" /> Receipt Added (Tap to remove)</> : <><CameraIcon className="w-3.5 h-3.5" /> Snap Receipt (Optional)</>}
               </span>
             </button>
           </div>

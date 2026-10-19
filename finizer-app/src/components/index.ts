@@ -22,6 +22,8 @@ export { default as WeekCalendarStrip } from "./dashboard/WeekCalendarStrip";
 export { default as AddProjectForm } from "./forms/AddProjectForm";
 export { default as QuickAddSheet } from "./sheets/QuickAddSheet";
 export type { TransactionData } from "./sheets/QuickAddSheet";
+export { default as LogReceiptSheet } from "./sheets/LogReceiptSheet";
+export type { LogReceiptData } from "./sheets/LogReceiptSheet";
 
 // Icons — original UI set + Finizer financial/operations set
 export * from "./icons";

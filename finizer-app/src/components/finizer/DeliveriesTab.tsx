@@ -1,45 +1,68 @@
 "use client";
 import React, { useState } from "react";
 import EmptyState from "./EmptyState";
-import { TruckIcon, BoxIcon, CardReceiveIcon } from "../icons";
+import {
+  TruckIcon,
+  BoxIcon,
+  CardReceiveIcon,
+  AlertTriangleIcon,
+  TimeCircleIcon,
+  CheckIcon,
+} from "../icons";
+import { formatINR, calculateDeliveryAging } from "../../utils/format";
+import LogReceiptSheet, { LogReceiptData } from "../sheets/LogReceiptSheet";
 
-interface PurchaseOrder {
+export interface PurchaseOrder {
   id: string;
   vendorName: string;
   orderDate: string;
+  expectedDeliveryDate?: string;
   expectedAmount: number;
   receivedAmount: number;
   status: "PENDING" | "PARTIAL" | "COMPLETE";
   deliveryNote: string;
+  challanNumber?: string;
 }
+
+// Generate realistic date strings relative to today
+const getRelativeDate = (offsetDays: number): string => {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return d.toISOString().split("T")[0];
+};
 
 const SAMPLE_ORDERS: PurchaseOrder[] = [
   {
     id: "po-1",
     vendorName: "RK Wholesalers Ltd",
-    orderDate: "18 Oct 2026",
+    orderDate: "15 Oct 2026",
+    expectedDeliveryDate: getRelativeDate(-3), // 3 days overdue
     expectedAmount: 2000000,
     receivedAmount: 1500000,
     status: "PARTIAL",
-    deliveryNote: "₹5,00,000 pending parcel in transit from warehouse",
+    deliveryNote: "₹5,00,000 pending parcel in transit from Surat warehouse",
+    challanNumber: "LR-88291-SRT",
   },
   {
     id: "po-2",
     vendorName: "Sunrise FMCG Distributors",
-    orderDate: "15 Oct 2026",
+    orderDate: "12 Oct 2026",
+    expectedDeliveryDate: getRelativeDate(-5),
     expectedAmount: 650000,
     receivedAmount: 650000,
     status: "COMPLETE",
     deliveryNote: "Fully delivered & verified on 19 Oct",
+    challanNumber: "CH-1092-FMCG",
   },
   {
     id: "po-3",
     vendorName: "Apex Beverage Suppliers",
     orderDate: "19 Oct 2026",
+    expectedDeliveryDate: getRelativeDate(2), // Expected in 2 days
     expectedAmount: 340000,
     receivedAmount: 0,
     status: "PENDING",
-    deliveryNote: "Expected arrival tomorrow morning 10 AM",
+    deliveryNote: "Dispatched from Delhi depot. Expected in 2 days.",
   },
 ];
 
@@ -47,32 +70,51 @@ export default function DeliveriesTab() {
   const [activeFilter, setActiveFilter] = useState<"Active" | "Completed">("Active");
   const [orders, setOrders] = useState<PurchaseOrder[]>(SAMPLE_ORDERS);
   const [isDayOnePreview, setIsDayOnePreview] = useState(false);
-  const [selectedOrderForLog, setSelectedOrderForLog] = useState<PurchaseOrder | null>(null);
-  const [receiveInput, setReceiveInput] = useState<string>("");
+  const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null);
+  const [isReceiptSheetOpen, setIsReceiptSheetOpen] = useState(false);
+  const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
 
-  const handleLogParcel = (orderId: string) => {
-    const amount = parseFloat(receiveInput);
-    if (isNaN(amount) || amount <= 0) {
-      alert("Please enter a valid received amount");
-      return;
-    }
+  const showToast = (msg: string) => {
+    setFeedbackToast(msg);
+    setTimeout(() => setFeedbackToast(null), 3500);
+  };
 
+  const handleOpenReceiptSheet = (order: PurchaseOrder) => {
+    setSelectedPO(order);
+    setIsReceiptSheetOpen(true);
+  };
+
+  const handleSaveReceipt = (data: LogReceiptData) => {
     setOrders((prev) =>
       prev.map((order) => {
-        if (order.id !== orderId) return order;
-        const newReceived = Math.min(order.expectedAmount, order.receivedAmount + amount);
-        const newStatus = newReceived >= order.expectedAmount ? "COMPLETE" : "PARTIAL";
+        if (order.id !== data.poId) return order;
+        const newReceived = Math.min(
+          order.expectedAmount,
+          order.receivedAmount + data.amount
+        );
+        const newStatus =
+          newReceived >= order.expectedAmount ? "COMPLETE" : "PARTIAL";
+
+        const noteSnippet = data.challanNumber
+          ? `Bilty #${data.challanNumber}`
+          : "Parcel logged";
+
         return {
           ...order,
           receivedAmount: newReceived,
           status: newStatus,
-          deliveryNote: newStatus === "COMPLETE" ? "All parcels received & verified" : `Partial parcel logged (+₹${amount.toLocaleString("en-IN")})`,
+          challanNumber: data.challanNumber || order.challanNumber,
+          deliveryNote:
+            newStatus === "COMPLETE"
+              ? `Fully received & verified (${noteSnippet})`
+              : `Partial parcel received (+${formatINR(data.amount)}) via ${noteSnippet}`,
         };
       })
     );
 
-    setSelectedOrderForLog(null);
-    setReceiveInput("");
+    showToast(
+      `Receipt of ${formatINR(data.amount)} logged successfully. Audit record created.`
+    );
   };
 
   const filteredOrders = orders.filter((o) => {
@@ -82,7 +124,7 @@ export default function DeliveriesTab() {
 
   return (
     <div className="flex flex-col gap-5 animate-fade-in">
-      {/* Header with Contextual Non-FAB [ + New Order ] Button */}
+      {/* 1. Header with Contextual Non-FAB [ + New Order ] Button */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-[#120D26]">Deliveries</h1>
@@ -90,7 +132,7 @@ export default function DeliveriesTab() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Day 1 toggle */}
+          {/* Day 1 preview toggle */}
           <button
             onClick={() => setIsDayOnePreview(!isDayOnePreview)}
             className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-all ${
@@ -104,7 +146,7 @@ export default function DeliveriesTab() {
 
           {/* Standard Header Button for New Purchase Order (Preserves FAB muscle memory) */}
           <button
-            onClick={() => alert("Open New Purchase Order Modal")}
+            onClick={() => showToast("Opening New Purchase Order form...")}
             className="bg-[#5F33E1] hover:bg-[#5029C9] text-white text-xs font-bold px-3 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1 active:scale-95"
           >
             <span>+ New Order</span>
@@ -112,7 +154,14 @@ export default function DeliveriesTab() {
         </div>
       </div>
 
-      {/* Segmented Filter */}
+      {feedbackToast && (
+        <div className="bg-[#DCFCE7] text-[#16A34A] text-xs font-bold p-3.5 rounded-2xl border border-[#BBF7D0] animate-fade-in flex items-center gap-2 shadow-sm">
+          <CheckIcon className="w-4 h-4 text-[#16A34A] shrink-0" />
+          <span>{feedbackToast}</span>
+        </div>
+      )}
+
+      {/* 2. Segmented Filter */}
       <div className="flex bg-[#F5F2FF] p-1 rounded-full border border-[#EDE8FB]">
         <button
           onClick={() => setActiveFilter("Active")}
@@ -136,7 +185,7 @@ export default function DeliveriesTab() {
         </button>
       </div>
 
-      {/* Content */}
+      {/* 3. Content */}
       {isDayOnePreview ? (
         <EmptyState
           icon={<TruckIcon className="w-8 h-8 text-[#5F33E1]" />}
@@ -153,6 +202,8 @@ export default function DeliveriesTab() {
           {filteredOrders.map((order) => {
             const percentage = Math.round((order.receivedAmount / order.expectedAmount) * 100);
             const isCompleted = order.status === "COMPLETE";
+            const pendingAmount = order.expectedAmount - order.receivedAmount;
+            const aging = calculateDeliveryAging(order.expectedDeliveryDate);
 
             return (
               <div
@@ -160,7 +211,7 @@ export default function DeliveriesTab() {
                 className="bg-white rounded-3xl p-5 shadow-sm border border-[#F2F0F5] relative overflow-hidden"
               >
                 {/* Top Row: Vendor & Status Badge */}
-                <div className="flex items-start justify-between mb-3">
+                <div className="flex items-start justify-between mb-2">
                   <div>
                     <h3 className="text-base font-extrabold text-[#120D26] leading-tight">
                       {order.vendorName}
@@ -183,13 +234,30 @@ export default function DeliveriesTab() {
                   </span>
                 </div>
 
-                {/* Progress Bar & Amounts */}
+                {/* Aging Metric Badge (Overdue vs Expected) */}
+                {!isCompleted && aging && (
+                  <div className="mb-3">
+                    {aging.isOverdue ? (
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#FEF2F2] border border-[#FEE2E2] text-[#DC2626]">
+                        <AlertTriangleIcon className="w-3.5 h-3.5 text-[#DC2626] shrink-0" />
+                        <span>{aging.label}</span>
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#F0FDF4] border border-[#DCFCE7] text-[#16A34A]">
+                        <TimeCircleIcon className="w-3.5 h-3.5 text-[#16A34A] shrink-0" />
+                        <span>{aging.label}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Progress Bar & Amounts (Smart INR Formatter) */}
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-[#99969E] font-medium">
                       Received:{" "}
                       <strong className="text-[#120D26]">
-                        ₹{order.receivedAmount.toLocaleString("en-IN")}
+                        {formatINR(order.receivedAmount)}
                       </strong>
                     </span>
                     <span className="font-extrabold text-[#120D26]">
@@ -208,68 +276,60 @@ export default function DeliveriesTab() {
                   </div>
 
                   <div className="flex items-center justify-between text-[11px] text-[#99969E]">
-                    <span>Expected Total: ₹{order.expectedAmount.toLocaleString("en-IN")}</span>
+                    <span>Expected Total: {formatINR(order.expectedAmount)}</span>
                     {!isCompleted && (
                       <span className="text-[#D97706] font-semibold">
-                        Pending: ₹{(order.expectedAmount - order.receivedAmount).toLocaleString("en-IN")}
+                        Pending: {formatINR(pendingAmount)}
                       </span>
                     )}
                   </div>
                 </div>
 
-                {/* Delivery Note */}
-                <p className="text-[11px] text-[#524E59] bg-[#F8F9FA] p-2.5 rounded-xl mb-3 flex items-center gap-1.5">
-                  <BoxIcon className="w-4 h-4 text-[#524E59] shrink-0" /> {order.deliveryNote}
-                </p>
-
-                {/* Action: Log Received Parcel */}
-                {!isCompleted && (
-                  <div>
-                    {selectedOrderForLog?.id === order.id ? (
-                      <div className="bg-[#EDE8FB]/60 p-3 rounded-2xl border border-[#EDE8FB] space-y-2 animate-fade-in">
-                        <label className="block text-[11px] font-bold text-[#5F33E1]">
-                          Enter amount of stock received today:
-                        </label>
-                        <div className="flex gap-2">
-                          <input
-                            type="number"
-                            placeholder="e.g. 500000"
-                            value={receiveInput}
-                            onChange={(e) => setReceiveInput(e.target.value)}
-                            className="flex-1 bg-white px-3 py-2 rounded-xl text-xs font-bold text-[#120D26] border border-gray-200 outline-none"
-                          />
-                          <button
-                            onClick={() => handleLogParcel(order.id)}
-                            className="bg-[#5F33E1] text-white text-xs font-bold px-3 py-2 rounded-xl"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={() => setSelectedOrderForLog(null)}
-                            className="bg-gray-200 text-gray-700 text-xs font-bold px-2 py-2 rounded-xl"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          setSelectedOrderForLog(order);
-                          setReceiveInput("");
-                        }}
-                        className="w-full bg-[#EDE8FB] hover:bg-[#E1D7FA] text-[#5F33E1] font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <span className="flex items-center gap-1.5"><CardReceiveIcon className="w-4 h-4" /> Log Received Parcel</span>
-                      </button>
+                {/* Delivery Note & Challan Tag */}
+                <div className="text-[11px] text-[#524E59] bg-[#F8F9FA] p-2.5 rounded-xl mb-3 flex items-start gap-2">
+                  <BoxIcon className="w-4 h-4 text-[#524E59] shrink-0 mt-0.5" />
+                  <div className="min-w-0 flex-1">
+                    <p>{order.deliveryNote}</p>
+                    {order.challanNumber && (
+                      <p className="text-[10px] text-[#99969E] font-mono mt-0.5 font-bold">
+                        Bilty/LR: {order.challanNumber}
+                      </p>
                     )}
                   </div>
+                </div>
+
+                {/* Action: 1-Tap Trigger for LogReceiptSheet */}
+                {!isCompleted && (
+                  <button
+                    onClick={() => handleOpenReceiptSheet(order)}
+                    className="w-full bg-[#EDE8FB] hover:bg-[#E1D7FA] text-[#5F33E1] font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-[0.99]"
+                  >
+                    <CardReceiveIcon className="w-4 h-4 text-[#5F33E1]" />
+                    <span>Log Received Parcel</span>
+                  </button>
                 )}
               </div>
             );
           })}
         </div>
       )}
+
+      {/* 10/10 Log Receipt Bottom Sheet */}
+      <LogReceiptSheet
+        po={
+          selectedPO
+            ? {
+                id: selectedPO.id,
+                vendorName: selectedPO.vendorName,
+                expectedAmount: selectedPO.expectedAmount,
+                receivedAmount: selectedPO.receivedAmount,
+              }
+            : null
+        }
+        isOpen={isReceiptSheetOpen}
+        onClose={() => setIsReceiptSheetOpen(false)}
+        onSave={handleSaveReceipt}
+      />
     </div>
   );
 }

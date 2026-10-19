@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@theme {
+  --font-manrope: "Manrope", sans-serif;
+  --font-sans: "Manrope", sans-serif;
+
+  /* ── Purple Shade Scale ───────────────────────── */
+  --color-purple-900: #2D1A7A;
+  --color-purple-800: #3D22A8;
+  --color-purple-700: #4A27B3;
+  --color-purple-600: #5530CC;
+  --color-purple-500: #5F33E1;   /* primary brand */
+  --color-purple-400: #7C5CE8;
+  --color-purple-300: #9F87EF;
+  --color-purple-200: #C5B8F6;
+  --color-purple-100: #EDE8FB;
+  --color-purple-50:  #F5F2FF;
+
+  /* ── Semantic Aliases ─────────────────────────── */
+  --color-primary:       var(--color-purple-500);
+  --color-primary-dark:  var(--color-purple-700);
+  --color-primary-light: var(--color-purple-100);
+  --color-primary-ultra: var(--color-purple-50);
+
+  /* Status via purple shades */
+  --color-status-done:        var(--color-purple-500);
+  --color-status-in-progress: var(--color-purple-400);
+  --color-status-todo:        var(--color-purple-300);
+
+  /* Category badge tiers (A → darkest icon, lightest bg → C) */
+  --color-cat-a-icon: var(--color-purple-700);
+  --color-cat-a-bg:   var(--color-purple-100);
+  --color-cat-b-icon: var(--color-purple-500);
+  --color-cat-b-bg:   var(--color-purple-100);
+  --color-cat-c-icon: var(--color-purple-400);
+  --color-cat-c-bg:   var(--color-purple-50);
+
+  /* Finance semantic */
+  --color-income-icon: var(--color-purple-500);
+  --color-income-bg:   var(--color-purple-100);
+  --color-expense-icon: var(--color-purple-800);
+  --color-expense-bg:   var(--color-purple-50);
+
+  /* App surface */
+  --color-app-bg:        #F9F9FB;
+  --color-card:          #FFFFFF;
+  --color-text-primary:  #120D26;
+  --color-text-secondary:#99969E;
+  --color-border:        #F2F0F5;
+}
+
+:root {
+  --background: #F9F9FB;
+  --foreground: #120D26;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Manrope", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Hide scrollbar for horizontal scroll containers */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}

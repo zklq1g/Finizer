@@ -12,6 +12,16 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "Finizer — Task Management",
   description: "Manage your tasks with ease",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png" },
+    ],
+  },
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

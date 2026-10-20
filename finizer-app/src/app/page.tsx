@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   HomeIcon,
   DocumentIcon,
@@ -61,7 +62,16 @@ export default function FinizerApp() {
     <div className="min-h-screen bg-[#F0F2F5] flex flex-col items-center justify-center sm:py-6">
       {/* Dev link to component lab */}
       <div className="w-full max-w-md px-4 py-2 flex items-center justify-between text-[11px] text-gray-500">
-        <span className="font-bold text-[#120D26]">Finizer Retail OS</span>
+        <div className="flex items-center gap-1.5">
+          <Image
+            src="/icon.png"
+            alt="Finizer"
+            width={16}
+            height={16}
+            className="w-4 h-4 rounded-sm object-contain"
+          />
+          <span className="font-bold text-[#120D26]">Finizer Retail OS</span>
+        </div>
         <Link
           href="/dev-preview"
           className="text-[#5F33E1] font-semibold hover:underline bg-white px-2.5 py-0.5 rounded-full border border-gray-200 shadow-xs"
@@ -75,10 +85,20 @@ export default function FinizerApp() {
         
         {/* ── 1. GLOBAL TOP BAR ─────────────────────────── */}
         <header className="bg-white px-5 py-3.5 flex items-center justify-between border-b border-[#F2F0F5] sticky top-0 z-30 shrink-0">
-          {/* Left: Store Selector */}
-          <div className="flex items-center gap-1.5 cursor-pointer">
-            <h1 className="text-base font-black text-[#120D26] tracking-tight">Main Store</h1>
-            <ArrowDownIcon className="w-3.5 h-3.5 text-gray-400" />
+          {/* Left: Store Selector with App Icon */}
+          <div className="flex items-center gap-2 cursor-pointer">
+            <Image
+              src="/icon.png"
+              alt="Finizer"
+              width={26}
+              height={26}
+              className="w-[26px] h-[26px] rounded-lg shadow-xs object-contain"
+              priority
+            />
+            <div className="flex items-center gap-1.5">
+              <h1 className="text-base font-black text-[#120D26] tracking-tight">Main Store</h1>
+              <ArrowDownIcon className="w-3.5 h-3.5 text-gray-400" />
+            </div>
           </div>
 
           {/* Center: Human Sync Status */}

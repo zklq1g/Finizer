@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { WalletIcon, ReceiptIcon, TrendUpIcon, CardSendIcon, PrinterIcon, ShieldTickIcon, ChevronRightIcon } from "../icons";
+import MonthEndAllocator from "./MonthEndAllocator";
 
 interface SettingsTabProps {
   onOpenActivityLog: () => void;
@@ -8,11 +9,24 @@ interface SettingsTabProps {
 
 export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showAllocator, setShowAllocator] = useState<boolean>(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  if (showAllocator) {
+    return (
+      <MonthEndAllocator
+        onBack={() => setShowAllocator(false)}
+        onSuccess={(summary) => {
+          setShowAllocator(false);
+          showToast(`Month-end closed: ${summary.month} locked.`);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
@@ -35,7 +49,7 @@ export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
 
         {/* 1. Month-End Profit Allocator */}
         <button
-          onClick={() => showToast("Opening Profit Allocator: 3-Bucket system (Expenses, Salaries, Reinvestment)")}
+          onClick={() => setShowAllocator(true)}
           className="w-full bg-white rounded-2xl p-4 flex items-center justify-between border border-[#F2F0F5] hover:border-gray-300 transition-all text-left shadow-sm group"
         >
           <div className="flex items-center gap-3.5">

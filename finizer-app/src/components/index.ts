@@ -24,6 +24,7 @@ export { default as QuickAddSheet } from "./sheets/QuickAddSheet";
 export type { TransactionData } from "./sheets/QuickAddSheet";
 export { default as LogReceiptSheet } from "./sheets/LogReceiptSheet";
 export type { LogReceiptData } from "./sheets/LogReceiptSheet";
+export { default as MonthEndAllocator } from "./finizer/MonthEndAllocator";
 
 // Icons — original UI set + Finizer financial/operations set
 export * from "./icons";

@@ -12,6 +12,8 @@ import {
   PercentageSquareIcon,
 } from "../icons";
 import { formatINR } from "../../utils/format";
+import { api } from "@/services/api";
+import { useActor } from "@/context/ActorContext";
 
 interface AccountItem {
   id: string;
@@ -25,12 +27,13 @@ interface MonthEndAllocatorProps {
 }
 
 const DEFAULT_ACCOUNTS: AccountItem[] = [
-  { id: "acc-1", name: "Cash Drawer", balance: 120000 },
-  { id: "acc-2", name: "HDFC Bank", balance: 650000 },
-  { id: "acc-3", name: "Shop UPI", balance: 42000 },
+  { id: "acc-1", name: "Main Cash Drawer", balance: 120000 },
+  { id: "acc-2", name: "HDFC Bank Account", balance: 650000 },
+  { id: "acc-3", name: "PhonePe UPI", balance: 42000 },
 ];
 
 export default function MonthEndAllocator({ onBack, onSuccess }: MonthEndAllocatorProps) {
+  const { actor } = useActor();
   const today = new Date();
   const currentMonth = today.toLocaleString("en-IN", { month: "long" });
   const currentYear = today.getFullYear();
@@ -40,7 +43,7 @@ export default function MonthEndAllocator({ onBack, onSuccess }: MonthEndAllocat
   const netProfit = isTestLossMonth ? -40000 : 500000;
   const isLossMonth = netProfit < 0;
 
-  const [accounts] = useState<AccountItem[]>(DEFAULT_ACCOUNTS);
+  const [accounts, setAccounts] = useState<AccountItem[]>(DEFAULT_ACCOUNTS);
   const [mode, setMode] = useState<"AMOUNT" | "PERCENT">("AMOUNT");
 
   // Allocation input states
@@ -48,8 +51,30 @@ export default function MonthEndAllocator({ onBack, onSuccess }: MonthEndAllocat
   const [salaries, setSalaries] = useState<string>("");
   const [reinvestment, setReinvestment] = useState<string>("");
   const [payout, setPayout] = useState<string>("");
-  const [payoutAccountId, setPayoutAccountId] = useState<string>(DEFAULT_ACCOUNTS[1].id); // HDFC Bank default
+  const [payoutAccountId, setPayoutAccountId] = useState<string>(DEFAULT_ACCOUNTS[1].id);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Load real accounts from Supabase if available
+  useEffect(() => {
+    async function loadAccounts() {
+      try {
+        const liveAccounts = await api.getAccounts();
+        if (liveAccounts && liveAccounts.length > 0) {
+          const mapped = liveAccounts.map((a) => ({
+            id: a.id,
+            name: a.name,
+            balance: Number(a.current_balance),
+          }));
+          setAccounts(mapped);
+          setPayoutAccountId(mapped[0].id);
+        }
+      } catch (err) {
+        console.warn("Could not fetch remote accounts, using defaults:", err);
+      }
+    }
+    loadAccounts();
+  }, []);
 
   const selectedAccount = accounts.find((a) => a.id === payoutAccountId) || accounts[0];
 
@@ -90,8 +115,9 @@ export default function MonthEndAllocator({ onBack, onSuccess }: MonthEndAllocat
   const totalAllocated = amtOpex + amtSalaries + amtReinvestment + amtPayout;
   const unallocated = netProfit - totalAllocated;
 
-  const isOverAllocated = unallocated < 0;
-  const isOverdraft = amtPayout > (selectedAccount?.balance || 0);
+  // Validations
+  const isOverAllocated = !isLossMonth && totalAllocated > netProfit;
+  const isOverdraft = !isLossMonth && amtPayout > (selectedAccount?.balance || 0);
 
   const canSubmit =
     !isSubmitting &&
@@ -102,10 +128,22 @@ export default function MonthEndAllocator({ onBack, onSuccess }: MonthEndAllocat
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setIsSubmitting(true);
+    setErrorMessage(null);
 
     try {
-      // Simulate RPC execution delay
-      await new Promise((resolve) => setTimeout(resolve, 1400));
+      await api.closeMonth(
+        {
+          month: today.getMonth() + 1,
+          year: today.getFullYear(),
+          net_profit: netProfit,
+          alloc_opex: amtOpex,
+          alloc_salaries: amtSalaries,
+          alloc_reinvestment: amtReinvestment,
+          alloc_partner_payout: amtPayout,
+          payout_account_id: amtPayout > 0 ? selectedAccount.id : null,
+        },
+        actor
+      );
 
       if (onSuccess) {
         onSuccess({
@@ -113,16 +151,12 @@ export default function MonthEndAllocator({ onBack, onSuccess }: MonthEndAllocat
           netProfit,
           payout: amtPayout,
         });
-      } else {
-        alert(
-          isLossMonth
-            ? `Loss of ${formatINR(Math.abs(netProfit))} acknowledged. Month-end snapshot recorded.`
-            : `Month-end closed successfully! Partner payout of ${formatINR(amtPayout)} recorded.`
-        );
       }
       onBack();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to close month", error);
+      const msg = error instanceof Error ? error.message : "Failed to record monthly closure.";
+      setErrorMessage(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -169,35 +203,45 @@ export default function MonthEndAllocator({ onBack, onSuccess }: MonthEndAllocat
             Operational Loss Detected
           </h2>
 
-          <div className="bg-white rounded-2xl p-4 border border-[#F2F0F5] w-full mb-4 shadow-sm">
-            <p className="text-xs text-[#99969E] uppercase tracking-wider font-bold mb-1">
-              Net Loss for {currentMonth}
+          <p className="text-3xl font-black text-[#DC2626] mb-4">
+            - {formatINR(Math.abs(netProfit))}
+          </p>
+
+          <div className="bg-white p-4 rounded-2xl border border-[#F2F0F5] text-left text-xs text-[#524E59] space-y-2 mb-6">
+            <p className="font-bold text-[#120D26]">Proper Accounting Protocol:</p>
+            <p>
+              • Profit distributions and withdrawals are locked during negative cash flow.
             </p>
-            <p className="text-3xl font-black text-[#DC2626]">
-              - {formatINR(Math.abs(netProfit))}
+            <p>
+              • Closing the month will record this operational loss into your balance sheet
+              and adjust total business valuation.
+            </p>
+            <p>
+              • If capital was injected from personal funds, log it as an Income entry in the
+              ledger.
             </p>
           </div>
 
-          <p className="text-xs text-[#524E59] mb-8 leading-relaxed">
-            Profit allocations and partner payouts are disabled for this month. 
-            Closing the month will record this dip in your historical business valuation 
-            and absorb the loss into your existing cash reserves.
-          </p>
+          {errorMessage && (
+            <div className="p-3 mb-4 w-full bg-red-50 border border-red-200 rounded-2xl text-xs text-red-600 font-bold">
+              {errorMessage}
+            </div>
+          )}
 
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="w-full py-4 rounded-2xl text-base font-extrabold text-white bg-[#120D26] hover:bg-black disabled:opacity-50 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-2xl bg-[#120D26] text-white font-bold text-sm shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
               <>
                 <SpinnerIcon className="w-5 h-5 text-white" />
-                <span>Closing Month...</span>
+                <span>Recording Loss Snapshot...</span>
               </>
             ) : (
               <>
                 <CheckIcon className="w-5 h-5 text-white" />
-                <span>Acknowledge & Close Month</span>
+                <span>Acknowledge Loss & Lock Month</span>
               </>
             )}
           </button>
@@ -207,12 +251,12 @@ export default function MonthEndAllocator({ onBack, onSuccess }: MonthEndAllocat
   }
 
   // ─────────────────────────────────────────────
-  // PROFITABLE MONTH VIEW (3-Bucket + Payout Flow)
+  // PROFIT MONTH VIEW (Dual-Mode Allocation Engine)
   // ─────────────────────────────────────────────
   return (
     <div className="fixed inset-0 z-50 bg-[#F8F9FA] flex flex-col animate-fade-in">
-      {/* Header */}
-      <header className="bg-white px-5 py-3.5 border-b border-[#F2F0F5] flex items-center justify-between shrink-0">
+      {/* 1. Header */}
+      <header className="bg-white px-5 py-4 border-b border-[#F2F0F5] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
@@ -222,181 +266,244 @@ export default function MonthEndAllocator({ onBack, onSuccess }: MonthEndAllocat
             <ArrowLeftIcon className="w-5 h-5" />
           </button>
           <div>
-            <h2 className="text-lg font-black text-[#120D26]">Month-End Closure</h2>
+            <h2 className="text-lg font-black text-[#120D26]">Month-End Profit Allocator</h2>
             <p className="text-xs text-[#99969E] font-medium">{currentMonth} {currentYear}</p>
           </div>
         </div>
 
-        {/* Demo Toggle to test Loss Month */}
+        {/* Test toggle */}
         <button
           onClick={() => setIsTestLossMonth(true)}
           className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#FEF2F2] text-[#DC2626] border border-[#FEE2E2]"
         >
-          Test Loss State
+          Test Loss Mode
         </button>
       </header>
 
-      {/* Main Body */}
-      <main className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar-hide">
-        {/* Hero Card: Net Profit */}
-        <div className="bg-[#5F33E1] text-white p-6 rounded-3xl shadow-lg shadow-[#5F33E1]/25 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-          <div className="relative z-10">
-            <p className="text-xs font-bold text-white/80 uppercase tracking-wider mb-1">
-              Available Net Profit
-            </p>
-            <p className="text-4xl sm:text-[40px] font-black tracking-tight">
-              {formatINR(netProfit)}
-            </p>
-            <p className="text-xs text-white/70 mt-2 font-medium">
-              Calculated from all verified ledger inflows and operational outflows this month.
-            </p>
+      {/* 2. Scrollable Allocation Body */}
+      <main className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar-hide max-w-lg mx-auto w-full">
+        {errorMessage && (
+          <div className="p-3.5 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-600 font-bold flex items-center gap-2">
+            <AlertTriangleIcon className="w-4 h-4 shrink-0 text-red-600" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        {/* Hero Card: Net Profit & Mode Toggle */}
+        <div className="bg-white rounded-3xl p-5 border border-[#F2F0F5] shadow-xs">
+          <div className="flex items-start justify-between">
+            <div>
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#99969E]">
+                Net Profit Earned
+              </span>
+              <h1 className="text-3xl font-black text-[#120D26] tracking-tight mt-0.5">
+                {formatINR(netProfit)}
+              </h1>
+            </div>
+
+            {/* Mode Switcher: Rupees vs Percentage */}
+            <div className="flex bg-[#F5F2FF] p-1 rounded-xl border border-[#EDE8FB]">
+              <button
+                type="button"
+                onClick={() => setMode("AMOUNT")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${
+                  mode === "AMOUNT"
+                    ? "bg-[#5F33E1] text-white shadow-xs"
+                    : "text-[#99969E] hover:text-[#5F33E1]"
+                }`}
+              >
+                ₹ INR
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("PERCENT")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1 ${
+                  mode === "PERCENT"
+                    ? "bg-[#5F33E1] text-white shadow-xs"
+                    : "text-[#99969E] hover:text-[#5F33E1]"
+                }`}
+              >
+                <PercentageSquareIcon className="w-3.5 h-3.5" />
+                <span>%</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Mode Toggle: Rupees vs Percentage */}
-        <div className="flex bg-white p-1 rounded-2xl border border-[#F2F0F5] shadow-xs">
-          <button
-            type="button"
-            onClick={() => setMode("AMOUNT")}
-            className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
-              mode === "AMOUNT"
-                ? "bg-[#EDE8FB] text-[#5F33E1] shadow-xs"
-                : "text-[#99969E] hover:text-[#120D26]"
-            }`}
-          >
-            <WalletIcon className="w-4 h-4" />
-            <span>Rupees (₹)</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("PERCENT")}
-            className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
-              mode === "PERCENT"
-                ? "bg-[#EDE8FB] text-[#5F33E1] shadow-xs"
-                : "text-[#99969E] hover:text-[#120D26]"
-            }`}
-          >
-            <PercentageSquareIcon className="w-4 h-4" />
-            <span>Percentage (%)</span>
-          </button>
-        </div>
-
-        <div className="space-y-1">
-          <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#99969E]">
-            Designate Retained Profit
-          </h3>
-          <p className="text-[11px] text-[#99969E]">
-            Reserve funds stay safely in your accounts; only partner withdrawals move money.
-          </p>
-        </div>
-
-        {/* 4 Allocation Buckets */}
+        {/* Allocation Buckets */}
         <div className="space-y-3">
-          {[
-            {
-              label: "Store OpEx Reserve",
-              desc: "Buffer for rent, bills & maintenance",
-              icon: BriefcaseIcon,
-              val: opex,
-              set: setOpex,
-            },
-            {
-              label: "Salaries Reserve",
-              desc: "Ring-fenced payroll for next month",
-              icon: UserOctagonIcon,
-              val: salaries,
-              set: setSalaries,
-            },
-            {
-              label: "Reinvestment (CapEx)",
-              desc: "New inventory, equipment & store growth",
-              icon: TrendUpIcon,
-              val: reinvestment,
-              set: setReinvestment,
-            },
-            {
-              label: "Partner Payout",
-              desc: "Physical withdrawal taken by partners",
-              icon: WalletIcon,
-              val: payout,
-              set: setPayout,
-            },
-          ].map((bucket, i) => {
-            const Icon = bucket.icon;
-            const computedAmt = getAmount(bucket.val);
+          <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#99969E]">
+            Retained Earnings Designations
+          </span>
 
-            return (
-              <div
-                key={i}
-                className="bg-white p-4 rounded-2xl border border-[#F2F0F5] shadow-xs space-y-2 hover:border-gray-300 transition-colors"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-[#F5F2FF] flex items-center justify-center text-[#5F33E1]">
-                      <Icon className="w-5 h-5 text-[#5F33E1]" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-[#120D26]">{bucket.label}</p>
-                      <p className="text-[10px] text-[#99969E]">{bucket.desc}</p>
-                    </div>
-                  </div>
-
-                  {mode === "PERCENT" && (
-                    <span className="text-xs font-black text-[#5F33E1]">
-                      {formatINR(computedAmt)}
-                    </span>
-                  )}
+          {/* 1. Operating Expense Reserve */}
+          <div className="bg-white rounded-2xl p-4 border border-[#F2F0F5] focus-within:border-[#5F33E1] transition-all">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1]">
+                  <WalletIcon className="w-4 h-4 text-[#5F33E1]" />
                 </div>
-
-                <div className="flex items-baseline gap-2 border-b border-[#F2F0F5] pb-1 pt-1">
-                  <span className="text-xl font-black text-[#99969E] select-none">
-                    {mode === "AMOUNT" ? "₹" : "%"}
-                  </span>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="0"
-                    value={bucket.val}
-                    onChange={handleInput(bucket.set, mode === "PERCENT")}
-                    disabled={isSubmitting}
-                    className="w-full text-2xl font-black bg-transparent outline-none text-[#120D26]"
-                  />
+                <div>
+                  <h4 className="text-xs font-bold text-[#120D26]">Next Month OpEx Reserve</h4>
+                  <p className="text-[10px] text-[#99969E]">Rent, electricity & utilities</p>
                 </div>
               </div>
-            );
-          })}
+              <span className="text-xs font-extrabold text-[#5F33E1]">
+                {formatINR(amtOpex)}
+              </span>
+            </div>
+            <div className="flex items-center border border-[#F2F0F5] rounded-xl px-3 py-2 bg-[#F8F9FA]">
+              <span className="text-xs font-bold text-[#99969E] mr-2">
+                {mode === "PERCENT" ? "%" : "₹"}
+              </span>
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder={mode === "PERCENT" ? "0.00 %" : "0.00"}
+                value={opex}
+                onChange={handleInput(setOpex, mode === "PERCENT")}
+                className="w-full bg-transparent text-sm font-bold text-[#120D26] outline-none"
+              />
+            </div>
+          </div>
+
+          {/* 2. Salary Reserve */}
+          <div className="bg-white rounded-2xl p-4 border border-[#F2F0F5] focus-within:border-[#5F33E1] transition-all">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1]">
+                  <UserOctagonIcon className="w-4 h-4 text-[#5F33E1]" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#120D26]">Staff Salaries Reserve</h4>
+                  <p className="text-[10px] text-[#99969E]">Retained in bank for payroll</p>
+                </div>
+              </div>
+              <span className="text-xs font-extrabold text-[#5F33E1]">
+                {formatINR(amtSalaries)}
+              </span>
+            </div>
+            <div className="flex items-center border border-[#F2F0F5] rounded-xl px-3 py-2 bg-[#F8F9FA]">
+              <span className="text-xs font-bold text-[#99969E] mr-2">
+                {mode === "PERCENT" ? "%" : "₹"}
+              </span>
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder={mode === "PERCENT" ? "0.00 %" : "0.00"}
+                value={salaries}
+                onChange={handleInput(setSalaries, mode === "PERCENT")}
+                className="w-full bg-transparent text-sm font-bold text-[#120D26] outline-none"
+              />
+            </div>
+          </div>
+
+          {/* 3. Business Reinvestment */}
+          <div className="bg-white rounded-2xl p-4 border border-[#F2F0F5] focus-within:border-[#5F33E1] transition-all">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1]">
+                  <TrendUpIcon className="w-4 h-4 text-[#5F33E1]" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#120D26]">Store Expansion & CapEx</h4>
+                  <p className="text-[10px] text-[#99969E]">Shelving, deep freezers, interiors</p>
+                </div>
+              </div>
+              <span className="text-xs font-extrabold text-[#5F33E1]">
+                {formatINR(amtReinvestment)}
+              </span>
+            </div>
+            <div className="flex items-center border border-[#F2F0F5] rounded-xl px-3 py-2 bg-[#F8F9FA]">
+              <span className="text-xs font-bold text-[#99969E] mr-2">
+                {mode === "PERCENT" ? "%" : "₹"}
+              </span>
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder={mode === "PERCENT" ? "0.00 %" : "0.00"}
+                value={reinvestment}
+                onChange={handleInput(setReinvestment, mode === "PERCENT")}
+                className="w-full bg-transparent text-sm font-bold text-[#120D26] outline-none"
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Payout Account Selector (Only shown if Partner Payout > 0) */}
-        {amtPayout > 0 && (
-          <div className="bg-white p-4 rounded-2xl border border-[#F2F0F5] shadow-xs space-y-2 animate-fade-in">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#120D26]">
-                Withdraw Payout From:
-              </label>
-              <span className="text-[10px] font-bold text-[#5F33E1]">
-                Account-Level Balance Check
+        {/* 4. Physical Cash Movement: Partner Payout */}
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#5F33E1]">
+              Physical Cash Movement (Leaves Store)
+            </span>
+            <span className="text-[10px] bg-[#EDE8FB] text-[#5F33E1] font-bold px-2 py-0.5 rounded-full">
+              Triggers Ledger Entry
+            </span>
+          </div>
+
+          <div className="bg-white rounded-2xl p-4 border-2 border-[#5F33E1] shadow-xs">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#5F33E1] flex items-center justify-center text-white">
+                  <BriefcaseIcon className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#120D26]">Partner Profit Payout</h4>
+                  <p className="text-[10px] text-[#99969E]">Withdrawal to personal account</p>
+                </div>
+              </div>
+              <span className="text-xs font-black text-[#5F33E1]">
+                {formatINR(amtPayout)}
               </span>
             </div>
 
-            <select
-              value={payoutAccountId}
-              onChange={(e) => setPayoutAccountId(e.target.value)}
-              className="w-full p-3 bg-[#F8F9FA] rounded-xl border border-[#F2F0F5] text-xs font-bold text-[#120D26] outline-none"
-            >
+            <div className="flex items-center border border-[#F2F0F5] rounded-xl px-3 py-2 bg-[#F8F9FA] focus-within:border-[#5F33E1]">
+              <span className="text-xs font-bold text-[#99969E] mr-2">
+                {mode === "PERCENT" ? "%" : "₹"}
+              </span>
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder={mode === "PERCENT" ? "0.00 %" : "0.00"}
+                value={payout}
+                onChange={handleInput(setPayout, mode === "PERCENT")}
+                className="w-full bg-transparent text-sm font-bold text-[#120D26] outline-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* FIX #1: Account-Level Overdraft Protection */}
+        {amtPayout > 0 && (
+          <div className="bg-white rounded-2xl p-4 border border-[#F2F0F5] space-y-2">
+            <label className="block text-xs font-bold text-[#120D26]">
+              Withdraw Payout From Account
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {accounts.map((acc) => (
-                <option key={acc.id} value={acc.id}>
-                  {acc.name} ({formatINR(acc.balance)})
-                </option>
+                <button
+                  key={acc.id}
+                  type="button"
+                  onClick={() => setPayoutAccountId(acc.id)}
+                  className={`p-2.5 rounded-xl border text-left transition-all ${
+                    payoutAccountId === acc.id
+                      ? "border-[#5F33E1] bg-[#EDE8FB]/60"
+                      : "border-[#F2F0F5] bg-[#F8F9FA] hover:bg-gray-100"
+                  }`}
+                >
+                  <p className="text-[11px] font-bold text-[#120D26] truncate">{acc.name}</p>
+                  <p className="text-[10px] text-[#99969E] mt-0.5">
+                    {formatINR(acc.balance)}
+                  </p>
+                </button>
               ))}
-            </select>
+            </div>
 
             {isOverdraft && (
-              <p className="text-[11px] font-bold text-[#DC2626] flex items-center gap-1 mt-1">
-                <AlertTriangleIcon className="w-3.5 h-3.5 text-[#DC2626] shrink-0" />
+              <p className="text-xs text-[#DC2626] font-bold mt-2 flex items-center gap-1">
+                <AlertTriangleIcon className="w-3.5 h-3.5 shrink-0" />
                 <span>
-                  Payout of {formatINR(amtPayout)} exceeds {selectedAccount.name} balance (
+                  Payout ({formatINR(amtPayout)}) exceeds {selectedAccount.name} balance (
                   {formatINR(selectedAccount.balance)}). Overdraft prevented.
                 </span>
               </p>
@@ -456,7 +563,7 @@ export default function MonthEndAllocator({ onBack, onSuccess }: MonthEndAllocat
         >
           {isSubmitting ? (
             <>
-              <SpinnerIcon className="w-5 h-5 text-white" />
+              <SpinnerIcon className="w-5 h-5 text-white animate-spin" />
               <span>Closing Month & Saving Snapshot...</span>
             </>
           ) : (

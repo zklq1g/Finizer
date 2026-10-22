@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import EmptyState from "./EmptyState";
 import {
   TruckIcon,
@@ -11,6 +11,9 @@ import {
 } from "../icons";
 import { formatINR, calculateDeliveryAging } from "../../utils/format";
 import LogReceiptSheet, { LogReceiptData } from "../sheets/LogReceiptSheet";
+import NewOrderSheet from "../sheets/NewOrderSheet";
+import { api } from "@/services/api";
+import { useActor } from "@/context/ActorContext";
 
 export interface PurchaseOrder {
   id: string;
@@ -64,11 +67,13 @@ const SAMPLE_ORDERS: PurchaseOrder[] = [
 ];
 
 export default function DeliveriesTab() {
+  const { actor } = useActor();
   const [activeFilter, setActiveFilter] = useState<"Active" | "Completed">("Active");
   const [orders, setOrders] = useState<PurchaseOrder[]>(SAMPLE_ORDERS);
   const [isDayOnePreview, setIsDayOnePreview] = useState(false);
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null);
   const [isReceiptSheetOpen, setIsReceiptSheetOpen] = useState(false);
+  const [isNewOrderSheetOpen, setIsNewOrderSheetOpen] = useState(false);
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -76,12 +81,66 @@ export default function DeliveriesTab() {
     setTimeout(() => setFeedbackToast(null), 3500);
   };
 
+  const loadOrders = useCallback(async () => {
+    try {
+      const dbOrders = await api.getPurchaseOrders();
+      if (dbOrders && dbOrders.length > 0) {
+        const mapped: PurchaseOrder[] = dbOrders.map((o) => {
+          const dateStr = o.created_at
+            ? new Date(o.created_at).toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
+            : "Recent";
+
+          return {
+            id: o.id,
+            vendorName: o.vendor_name,
+            orderDate: dateStr,
+            expectedDeliveryDate: o.expected_delivery_date,
+            expectedAmount: Number(o.total_expected_amount),
+            receivedAmount: Number(o.total_received_amount),
+            status: o.status,
+            deliveryNote:
+              o.status === "COMPLETE"
+                ? "Fully delivered & verified"
+                : o.status === "PARTIAL"
+                ? `Partial goods received: ₹${Number(o.total_received_amount).toLocaleString("en-IN")}`
+                : "Awaiting incoming delivery dispatch",
+          };
+        });
+        setOrders(mapped);
+      }
+    } catch (err) {
+      console.warn("Could not load purchase orders from API, keeping local state:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
+
   const handleOpenReceiptSheet = (order: PurchaseOrder) => {
     setSelectedPO(order);
     setIsReceiptSheetOpen(true);
   };
 
-  const handleSaveReceipt = (data: LogReceiptData) => {
+  const handleSaveReceipt = async (data: LogReceiptData) => {
+    try {
+      await api.logGoodsReceipt(
+        {
+          po_id: data.poId,
+          amount: data.amount,
+          challan_number: data.challanNumber,
+          notes: data.notes,
+        },
+        data.actor || actor
+      );
+    } catch (err) {
+      console.warn("Backend receipt log error:", err);
+    }
+
     setOrders((prev) =>
       prev.map((order) => {
         if (order.id !== data.poId) return order;
@@ -138,9 +197,9 @@ export default function DeliveriesTab() {
             {isDayOnePreview ? "Viewing Day 1" : "Day 1"}
           </button>
 
-          {/* Standard Header Button for New Purchase Order (Preserves FAB muscle memory) */}
+          {/* Standard Header Button for New Purchase Order */}
           <button
-            onClick={() => showToast("Opening New Purchase Order form...")}
+            onClick={() => setIsNewOrderSheetOpen(true)}
             className="bg-[#5F33E1] hover:bg-[#5029C9] text-white text-xs font-bold px-3 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1 active:scale-95"
           >
             <span>+ New Order</span>
@@ -202,77 +261,98 @@ export default function DeliveriesTab() {
             return (
               <div
                 key={order.id}
-                className="bg-white rounded-3xl p-5 shadow-sm border border-[#F2F0F5] relative overflow-hidden"
+                className="bg-white rounded-3xl p-4 border border-[#F2F0F5] shadow-sm hover:border-[#EDE8FB] transition-colors"
               >
-                {/* Top Row: Vendor & Status Badge */}
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h3 className="text-base font-extrabold text-[#120D26] leading-tight">
+                {/* Header: Vendor Name & Status Chip */}
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-[#120D26] text-sm truncate">
                       {order.vendorName}
                     </h3>
-                    <p className="text-[11px] text-[#99969E] mt-0.5">
-                      Ordered on {order.orderDate}
+                    <p className="text-[11px] text-[#99969E] font-medium">
+                      Ordered {order.orderDate}
                     </p>
                   </div>
 
+                  {/* Status Badge */}
                   <span
-                    className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider ${
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 flex items-center gap-1 ${
                       isCompleted
                         ? "bg-[#DCFCE7] text-[#16A34A]"
                         : order.status === "PARTIAL"
                         ? "bg-[#FEF3C7] text-[#D97706]"
-                        : "bg-[#F3F4F6] text-gray-600"
+                        : "bg-[#EDE8FB] text-[#5F33E1]"
                     }`}
                   >
-                    {order.status}
+                    {isCompleted ? (
+                      <>
+                        <CheckIcon className="w-3 h-3 text-[#16A34A]" />
+                        <span>Completed</span>
+                      </>
+                    ) : order.status === "PARTIAL" ? (
+                      <>
+                        <TimeCircleIcon className="w-3 h-3 text-[#D97706]" />
+                        <span>Partial Delivery</span>
+                      </>
+                    ) : (
+                      <>
+                        <TruckIcon className="w-3 h-3 text-[#5F33E1]" />
+                        <span>In Transit</span>
+                      </>
+                    )}
                   </span>
                 </div>
 
-                {/* Aging Metric Badge (Overdue vs Expected) */}
-                {!isCompleted && aging && (
+                {/* Aging Metric / Overdue Warning Badge */}
+                {aging && !isCompleted && (
                   <div className="mb-3">
-                    {aging.isOverdue ? (
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#FEF2F2] border border-[#FEE2E2] text-[#DC2626]">
-                        <AlertTriangleIcon className="w-3.5 h-3.5 text-[#DC2626] shrink-0" />
-                        <span>{aging.label}</span>
-                      </div>
-                    ) : (
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#F0FDF4] border border-[#DCFCE7] text-[#16A34A]">
-                        <TimeCircleIcon className="w-3.5 h-3.5 text-[#16A34A] shrink-0" />
-                        <span>{aging.label}</span>
-                      </div>
-                    )}
+                    <span
+                      className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md ${
+                        aging.isOverdue
+                          ? "bg-red-50 text-red-600 border border-red-200"
+                          : "bg-amber-50 text-amber-700 border border-amber-200"
+                      }`}
+                    >
+                      {aging.isOverdue ? (
+                        <AlertTriangleIcon className="w-3 h-3 text-red-600 shrink-0" />
+                      ) : (
+                        <TimeCircleIcon className="w-3 h-3 text-amber-700 shrink-0" />
+                      )}
+                      <span>{aging.label}</span>
+                    </span>
                   </div>
                 )}
 
-                {/* Progress Bar & Amounts (Smart INR Formatter) */}
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-[#99969E] font-medium">
-                      Received:{" "}
-                      <strong className="text-[#120D26]">
-                        {formatINR(order.receivedAmount)}
-                      </strong>
-                    </span>
-                    <span className="font-extrabold text-[#120D26]">
-                      {percentage}%
+                {/* Progress Bar & Amounts */}
+                <div className="space-y-1.5 mb-3">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-[#99969E] font-medium">Delivered</span>
+                    <span className="font-bold text-[#120D26]">
+                      {formatINR(order.receivedAmount)}{" "}
+                      <span className="text-[#99969E] font-normal">
+                        / {formatINR(order.expectedAmount)}
+                      </span>
                     </span>
                   </div>
 
                   {/* Visual Progress Bar */}
-                  <div className="w-full h-2.5 bg-[#F2F0F5] rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-[#F2F0F5] rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        isCompleted ? "bg-[#16A34A]" : "bg-[#5F33E1]"
+                      className={`h-full rounded-full transition-all duration-300 ${
+                        isCompleted
+                          ? "bg-[#16A34A]"
+                          : percentage > 50
+                          ? "bg-[#5F33E1]"
+                          : "bg-[#FB8500]"
                       }`}
-                      style={{ width: `${percentage}%` }}
+                      style={{ width: `${Math.min(100, percentage)}%` }}
                     />
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px] text-[#99969E]">
-                    <span>Expected Total: {formatINR(order.expectedAmount)}</span>
-                    {!isCompleted && (
-                      <span className="text-[#D97706] font-semibold">
+                  <div className="flex justify-between items-center text-[10px]">
+                    <span className="font-bold text-[#5F33E1]">{percentage}% received</span>
+                    {!isCompleted && pendingAmount > 0 && (
+                      <span className="font-bold text-red-500">
                         Pending: {formatINR(pendingAmount)}
                       </span>
                     )}
@@ -316,6 +396,16 @@ export default function DeliveriesTab() {
         isOpen={isReceiptSheetOpen}
         onClose={() => setIsReceiptSheetOpen(false)}
         onSave={handleSaveReceipt}
+      />
+
+      {/* New Purchase Order Bottom Sheet */}
+      <NewOrderSheet
+        isOpen={isNewOrderSheetOpen}
+        onClose={() => setIsNewOrderSheetOpen(false)}
+        onSuccess={() => {
+          loadOrders();
+          showToast("New purchase order recorded successfully.");
+        }}
       />
     </div>
   );

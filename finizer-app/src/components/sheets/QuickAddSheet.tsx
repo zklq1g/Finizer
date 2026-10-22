@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { CameraIcon, CloseIcon, CheckIcon } from "../icons";
+import { api } from "@/services/api";
 
 export interface TransactionData {
   type: "EXPENSE" | "INCOME";
@@ -20,25 +21,37 @@ interface QuickAddSheetProps {
   onSubmit: (data: TransactionData) => void;
 }
 
-const ACCOUNTS = [
-  { id: "acc-1", name: "Cash Drawer", balance: 18500 },
-  { id: "acc-2", name: "Shop UPI", balance: 42000 },
-  { id: "acc-3", name: "HDFC Bank", balance: 150000 },
+interface AccountItem {
+  id: string;
+  name: string;
+  balance: number;
+}
+
+interface CategoryItem {
+  id: string;
+  name: string;
+}
+
+const DEFAULT_ACCOUNTS: AccountItem[] = [
+  { id: "acc-1", name: "Main Cash Drawer", balance: 18500 },
+  { id: "acc-2", name: "PhonePe UPI", balance: 42000 },
+  { id: "acc-3", name: "HDFC Bank Account", balance: 150000 },
 ];
 
-const CATEGORIES = {
+const DEFAULT_CATEGORIES: Record<"EXPENSE" | "INCOME", CategoryItem[]> = {
   EXPENSE: [
-    { id: "cat-1", name: "Tea & Snacks" },
-    { id: "cat-2", name: "Petrol / Fuel" },
-    { id: "cat-3", name: "Inventory Stock" },
-    { id: "cat-4", name: "Staff Advance" },
-    { id: "cat-5", name: "Shop Maintenance" },
+    { id: "cat-1", name: "Staff Welfare & Snacks" },
+    { id: "cat-2", name: "Transportation & Petrol" },
+    { id: "cat-3", name: "Inventory Purchase" },
+    { id: "cat-4", name: "Rent" },
+    { id: "cat-5", name: "Electricity & Utilities" },
+    { id: "cat-6", name: "Repairs & Maintenance" },
   ],
   INCOME: [
-    { id: "cat-6", name: "Daily Counter Sales" },
-    { id: "cat-7", name: "Store UPI QR" },
-    { id: "cat-8", name: "Wholesale Order" },
-    { id: "cat-9", name: "Scrap / Packaging" },
+    { id: "cat-7", name: "Sales Revenue" },
+    { id: "cat-8", name: "UPI Settlements" },
+    { id: "cat-9", name: "Wholesale Order" },
+    { id: "cat-10", name: "Scrap & Packaging" },
   ],
 };
 
@@ -49,15 +62,56 @@ export default function QuickAddSheet({
 }: QuickAddSheetProps) {
   const [amount, setAmount] = useState<string>("");
   const [type, setType] = useState<"EXPENSE" | "INCOME">("EXPENSE");
-  const [accountId, setAccountId] = useState<string>(ACCOUNTS[0].id);
-  const [categoryId, setCategoryId] = useState<string>(CATEGORIES.EXPENSE[0].id);
+  const [accounts, setAccounts] = useState<AccountItem[]>(DEFAULT_ACCOUNTS);
+  const [categories, setCategories] = useState<Record<"EXPENSE" | "INCOME", CategoryItem[]>>(DEFAULT_CATEGORIES);
+  const [accountId, setAccountId] = useState<string>(DEFAULT_ACCOUNTS[0].id);
+  const [categoryId, setCategoryId] = useState<string>(DEFAULT_CATEGORIES.EXPENSE[0].id);
   const [note, setNote] = useState<string>("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
 
   const amountRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // FIX #5: iOS Safari AutoFocus Micro-Delay
+  // Fetch live accounts & categories from Supabase
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [accs, cats] = await Promise.all([api.getAccounts(), api.getCategories()]);
+        if (accs && accs.length > 0) {
+          const mappedAccs = accs.map((a) => ({
+            id: a.id,
+            name: a.name,
+            balance: Number(a.current_balance),
+          }));
+          setAccounts(mappedAccs);
+          setAccountId(mappedAccs[0].id);
+        }
+
+        if (cats && cats.length > 0) {
+          const expCats = cats
+            .filter((c) => c.type !== "INCOME")
+            .map((c) => ({ id: c.id, name: c.name }));
+          const incCats = cats
+            .filter((c) => c.type === "INCOME")
+            .map((c) => ({ id: c.id, name: c.name }));
+
+          setCategories({
+            EXPENSE: expCats.length > 0 ? expCats : DEFAULT_CATEGORIES.EXPENSE,
+            INCOME: incCats.length > 0 ? incCats : DEFAULT_CATEGORIES.INCOME,
+          });
+
+          if (expCats.length > 0) {
+            setCategoryId(expCats[0].id);
+          }
+        }
+      } catch (err) {
+        console.warn("Could not fetch accounts/categories, using defaults:", err);
+      }
+    }
+    loadData();
+  }, []);
+
+  // iOS Safari AutoFocus Micro-Delay
   useEffect(() => {
     if (isOpen && amountRef.current) {
       const timer = setTimeout(() => {
@@ -88,8 +142,10 @@ export default function QuickAddSheet({
 
   const handleTypeChange = (newType: "EXPENSE" | "INCOME") => {
     setType(newType);
-    // Reset to first category of selected type to avoid corrupt category mapping
-    setCategoryId(CATEGORIES[newType][0].id);
+    const available = categories[newType];
+    if (available && available.length > 0) {
+      setCategoryId(available[0].id);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,8 +159,8 @@ export default function QuickAddSheet({
     const parsedAmount = parseFloat(amount);
     if (!amount || isNaN(parsedAmount) || parsedAmount <= 0 || !categoryId) return;
 
-    const currentAcc = ACCOUNTS.find((a) => a.id === accountId) || ACCOUNTS[0];
-    const currentCat = CATEGORIES[type].find((c) => c.id === categoryId) || CATEGORIES[type][0];
+    const currentAcc = accounts.find((a) => a.id === accountId) || accounts[0];
+    const currentCat = categories[type].find((c) => c.id === categoryId) || categories[type][0];
 
     onSubmit({
       amount: parsedAmount,
@@ -127,13 +183,13 @@ export default function QuickAddSheet({
 
   if (!isOpen) return null;
 
-  const activeCategories = CATEGORIES[type];
+  const activeCategories = categories[type] || [];
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center pointer-events-auto">
-      {/* FIX #3: 100dvh (Dynamic Viewport Height) prevents virtual keyboard collision */}
+      {/* 100dvh prevents virtual keyboard collision */}
       <div
-        className="fixed inset-0 h-[100dvh] bg-black/45 backdrop-blur-[2px] transition-opacity animate-fade-in"
+        className="fixed inset-0 h-[100dvh] bg-black/45 backdrop-blur-xs transition-opacity animate-fade-in"
         onClick={onClose}
       />
 
@@ -142,11 +198,8 @@ export default function QuickAddSheet({
         
         {/* 1. HEADER (Fixed Top) */}
         <div className="flex flex-col items-center pt-3 pb-3 px-5 border-b border-[#F2F0F5] shrink-0 bg-white">
-          <div
-            onClick={onClose}
-            className="w-12 h-1.5 bg-gray-200 rounded-full mb-3 cursor-pointer hover:bg-gray-300 transition-colors"
-          />
-          <div className="flex items-center justify-between w-full">
+          <div className="w-10 h-1 bg-[#F2F0F5] rounded-full mb-2" />
+          <div className="w-full flex items-center justify-between">
             <div>
               <span className="text-[10px] font-bold tracking-widest text-[#99969E] uppercase">
                 Quick Action
@@ -219,25 +272,25 @@ export default function QuickAddSheet({
             </button>
           </div>
 
-          {/* C. FIX #1: ACCOUNT CHIPS (1-Tap Selection + Live Balance Context) */}
+          {/* C. ACCOUNT CHIPS */}
           <div className="space-y-2">
             <label className="block text-xs font-bold text-[#120D26]">
               From / To Account
             </label>
             <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
-              {ACCOUNTS.map((acc) => (
+              {accounts.map((acc) => (
                 <button
                   key={acc.id}
                   type="button"
                   onClick={() => setAccountId(acc.id)}
-                  className={`flex flex-col items-start min-w-[115px] p-3 rounded-2xl border transition-all shrink-0 text-left ${
+                  className={`flex flex-col items-start min-w-[125px] p-3 rounded-2xl border transition-all shrink-0 text-left ${
                     accountId === acc.id
                       ? "border-[#5F33E1] bg-[#EDE8FB]/60 shadow-sm"
                       : "border-[#F2F0F5] bg-[#F8F9FA] hover:bg-gray-100"
                   }`}
                 >
                   <span
-                    className={`text-xs font-bold truncate ${
+                    className={`text-xs font-bold truncate max-w-[110px] ${
                       accountId === acc.id ? "text-[#5F33E1]" : "text-[#120D26]"
                     }`}
                   >
@@ -251,7 +304,7 @@ export default function QuickAddSheet({
             </div>
           </div>
 
-          {/* D. FIX #2: DYNAMIC CATEGORY CHIPS */}
+          {/* D. DYNAMIC CATEGORY CHIPS */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-[#120D26]">
@@ -276,21 +329,15 @@ export default function QuickAddSheet({
                   {cat.name}
                 </button>
               ))}
-              <button
-                type="button"
-                className="px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap bg-[#F8F9FA] text-[#99969E] border border-dashed border-[#F2F0F5] shrink-0 hover:text-[#5F33E1]"
-              >
-                More +
-              </button>
             </div>
           </div>
 
-          {/* E. NOTE & FIX #4: STATEFUL CAMERA PILL (capture="environment") */}
+          {/* E. NOTE & CAMERA */}
           <div className="space-y-3 pt-1">
             <div className="bg-[#F8F9FA] rounded-2xl p-3 border border-[#F2F0F5] focus-within:border-[#5F33E1]">
               <input
                 type="text"
-                placeholder="Add a note (Optional, e.g., Stickers for packing)"
+                placeholder="Add a note (Optional, e.g., Packaging cartons)"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 className="w-full text-xs text-[#120D26] font-medium bg-transparent outline-none"
@@ -325,14 +372,22 @@ export default function QuickAddSheet({
             >
               <CameraIcon className="w-4 h-4 shrink-0" />
               <span className="flex items-center gap-1">
-                {receiptFile ? <><CheckIcon className="w-3.5 h-3.5 text-[#16A34A]" /> Receipt Added (Tap to remove)</> : <><CameraIcon className="w-3.5 h-3.5" /> Snap Receipt (Optional)</>}
+                {receiptFile ? (
+                  <>
+                    <CheckIcon className="w-3.5 h-3.5 text-[#16A34A]" /> Receipt Added (Tap to remove)
+                  </>
+                ) : (
+                  <>
+                    <span>Snap Receipt (Optional)</span>
+                  </>
+                )}
               </span>
             </button>
           </div>
 
         </form>
 
-        {/* 3. STICKY FOOTER (Always visible above keyboard via dvh flex architecture) */}
+        {/* 3. STICKY FOOTER */}
         <div className="p-5 pt-3 pb-8 border-t border-[#F2F0F5] bg-white shrink-0">
           <button
             type="submit"

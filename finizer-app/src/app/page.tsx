@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -21,26 +21,72 @@ import SettingsTab from "../components/finizer/SettingsTab";
 // Modals & Bottom Sheets
 import QuickAddSheet, { TransactionData } from "../components/sheets/QuickAddSheet";
 import ActivityLogModal from "../components/finizer/ActivityLogModal";
+import { api } from "@/services/api";
+import { useActor } from "@/context/ActorContext";
 
 type TabId = "home" | "entries" | "deliveries" | "settings";
 
+interface TransactionItem {
+  id: string;
+  title: string;
+  account: string;
+  amount: number;
+  type: "INCOME" | "EXPENSE";
+  time: string;
+}
+
+const DEFAULT_TRANSACTIONS: TransactionItem[] = [
+  { id: "1", title: "Daily Counter Sales (Cash)", account: "Main Cash Drawer", amount: 15400, type: "INCOME", time: "Today, 02:40 PM" },
+  { id: "2", title: "Staff Tea & Evening Snacks", account: "Main Cash Drawer", amount: 350, type: "EXPENSE", time: "Today, 01:15 PM" },
+  { id: "3", title: "Packaging Boxes Wholesale", account: "PhonePe UPI", amount: 4800, type: "EXPENSE", time: "Today, 11:30 AM" },
+  { id: "4", title: "UPI Store QR Collections", account: "PhonePe UPI", amount: 26800, type: "INCOME", time: "Yesterday, 09:10 PM" },
+  { id: "5", title: "Delivery Van Petrol Fuel", account: "Main Cash Drawer", amount: 1200, type: "EXPENSE", time: "Yesterday, 04:00 PM" },
+];
+
 export default function FinizerApp() {
+  const { actor } = useActor();
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
   const [isActivityLogOpen, setIsActivityLogOpen] = useState<boolean>(false);
-  const [hasRecentEditBadge, setHasRecentEditBadge] = useState<boolean>(true);
+  const [hasRecentEditBadge, setHasRecentEditBadge] = useState<boolean>(false);
+  const [lastSyncTime, setLastSyncTime] = useState<string>("Saved just now");
 
   // Live in-memory transactions feed
-  const [transactions, setTransactions] = useState<any[]>([
-    { id: "1", title: "Daily Counter Sales (Cash)", account: "Cash Drawer", amount: 15400, type: "INCOME", time: "Today, 02:40 PM" },
-    { id: "2", title: "Staff Tea & Evening Snacks", account: "Cash Drawer", amount: 350, type: "EXPENSE", time: "Today, 01:15 PM" },
-    { id: "3", title: "Packaging Boxes Wholesale", account: "Shop UPI", amount: 4800, type: "EXPENSE", time: "Today, 11:30 AM" },
-    { id: "4", title: "UPI Store QR Collections", account: "Shop UPI", amount: 26800, type: "INCOME", time: "Yesterday, 09:10 PM" },
-    { id: "5", title: "Delivery Van Petrol Fuel", account: "Cash Drawer", amount: 1200, type: "EXPENSE", time: "Yesterday, 04:00 PM" },
-  ]);
+  const [transactions, setTransactions] = useState<TransactionItem[]>(DEFAULT_TRANSACTIONS);
 
-  const handleNewTransaction = (data: TransactionData) => {
-    const newEntry = {
+  const loadData = useCallback(async () => {
+    try {
+      const dbTx = await api.getTransactions(10);
+      if (dbTx && dbTx.length > 0) {
+        const mapped: TransactionItem[] = dbTx.map((tx) => {
+          const catName = (tx.categories as { name?: string })?.name || "Entry";
+          const desc = tx.description ? ` - ${tx.description}` : "";
+          const accName = (tx.accounts as { name?: string })?.name || "Account";
+          return {
+            id: tx.id,
+            title: `${catName}${desc}`,
+            account: accName,
+            amount: Number(tx.amount),
+            type: tx.type,
+            time: tx.date || "Recent",
+          };
+        });
+        setTransactions(mapped);
+        setLastSyncTime("Live Synced");
+      }
+    } catch (err) {
+      console.warn("Could not fetch remote transactions, running in offline mode:", err);
+      setLastSyncTime("Offline Mode");
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleNewTransaction = async (data: TransactionData) => {
+    // 1. Optimistic UI update
+    const newEntry: TransactionItem = {
       id: Date.now().toString(),
       title: data.categoryName + (data.note ? ` - ${data.note}` : ""),
       account: data.accountName,
@@ -49,6 +95,25 @@ export default function FinizerApp() {
       time: "Just now",
     };
     setTransactions((prev) => [newEntry, ...prev]);
+
+    // 2. Persist to live Supabase database with actor attribution
+    try {
+      await api.createTransaction(
+        {
+          account_id: data.accountId,
+          category_id: data.categoryId,
+          amount: data.amount,
+          type: data.type,
+          date: data.date,
+          description: data.note,
+        },
+        actor
+      );
+      loadData();
+      setHasRecentEditBadge(true);
+    } catch (err) {
+      console.warn("Could not save to remote database, retained local optimistic state:", err);
+    }
   };
 
   const navItems = [
@@ -68,7 +133,7 @@ export default function FinizerApp() {
             alt="Finizer"
             width={16}
             height={16}
-            className="w-4 h-4 rounded-sm object-contain"
+            className="w-4 h-4 rounded-xs object-contain"
           />
           <span className="font-bold text-[#120D26]">Finizer Retail OS</span>
         </div>
@@ -103,7 +168,7 @@ export default function FinizerApp() {
 
           {/* Center: Human Sync Status */}
           <span className="text-[11px] font-medium text-gray-400">
-            Saved 2m ago
+            {lastSyncTime}
           </span>
 
           {/* Right: Partner Trust Shield */}

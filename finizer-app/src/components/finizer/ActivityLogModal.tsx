@@ -1,6 +1,7 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ShieldTickIcon, FilterIcon, TrashIcon, LockIcon, CloseIcon, AlertTriangleIcon, UserOctagonIcon, ArrowRightIcon } from "../icons";
+import { api } from "@/services/api";
 
 export interface AuditSnapshot {
   amount: number;
@@ -24,7 +25,7 @@ interface ActivityLogModalProps {
   onClose: () => void;
 }
 
-// MOCK DATA: Simulating real forensic theft & edit scenarios
+// FALLBACK MOCK DATA: Simulating real forensic theft & edit scenarios
 const FORENSIC_LOGS: ForensicLog[] = [
   {
     id: "log-1",
@@ -72,13 +73,59 @@ const FORENSIC_LOGS: ForensicLog[] = [
 
 export default function ActivityLogModal({ isOpen, onClose }: ActivityLogModalProps) {
   const [filter, setFilter] = useState<"ALL" | "SUSPICIOUS">("ALL");
+  const [logs, setLogs] = useState<ForensicLog[]>(FORENSIC_LOGS);
+
+  // Load real audit records from Supabase
+  useEffect(() => {
+    if (!isOpen) return;
+    async function loadAuditLogs() {
+      try {
+        const rawLogs = await api.getAuditLogs(50);
+        if (rawLogs && rawLogs.length > 0) {
+          const mapped: ForensicLog[] = rawLogs.map((l) => {
+            const oldObj = (l.old_data as Record<string, unknown>) || null;
+            const newObj = (l.new_data as Record<string, unknown>) || null;
+
+            return {
+              id: l.id,
+              action: l.action,
+              timestamp: l.timestamp,
+              actor: l.actor || "Store Owner",
+              old_data: oldObj
+                ? {
+                    amount: Number(oldObj.amount || oldObj.received || 0),
+                    account_name: String(oldObj.account_name || oldObj.account_id || "Account"),
+                    category_name: String(oldObj.category_name || oldObj.vendor || "Category"),
+                    date: oldObj.date ? String(oldObj.date) : "",
+                    description: oldObj.description ? String(oldObj.description) : "",
+                  }
+                : null,
+              new_data: newObj
+                ? {
+                    amount: Number(newObj.amount || newObj.received || newObj.expected_amount || 0),
+                    account_name: String(newObj.account_name || newObj.account_id || "Account"),
+                    category_name: String(newObj.category_name || newObj.vendor || newObj.vendor_name || "Category"),
+                    date: newObj.date ? String(newObj.date) : newObj.expected_date ? String(newObj.expected_date) : "",
+                    description: newObj.description ? String(newObj.description) : "",
+                  }
+                : null,
+            };
+          });
+          setLogs(mapped);
+        }
+      } catch (err) {
+        console.warn("Could not fetch remote audit logs, using simulated dataset:", err);
+      }
+    }
+    loadAuditLogs();
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const suspiciousLogs = FORENSIC_LOGS.filter(
+  const suspiciousLogs = logs.filter(
     (log) => log.action === "EDITED" || log.action === "SOFT_DELETED"
   );
-  const displayedLogs = filter === "SUSPICIOUS" ? suspiciousLogs : FORENSIC_LOGS;
+  const displayedLogs = filter === "SUSPICIOUS" ? suspiciousLogs : logs;
 
   // ROBUST DIFF ENGINE: Analyzes JSON snapshots directly (Amount, Account, Category, Date)
   const getDiffs = (oldData: AuditSnapshot | null, newData: AuditSnapshot | null) => {
@@ -141,9 +188,9 @@ export default function ActivityLogModal({ isOpen, onClose }: ActivityLogModalPr
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center pointer-events-auto">
-      {/* Backdrop */}
+      {/* Dimmed backdrop */}
       <div
-        className="fixed inset-0 h-[100dvh] bg-black/50 backdrop-blur-[2px] animate-fade-in"
+        className="fixed inset-0 bg-black/45 backdrop-blur-xs transition-opacity animate-fade-in"
         onClick={onClose}
       />
 
@@ -190,7 +237,7 @@ export default function ActivityLogModal({ isOpen, onClose }: ActivityLogModalPr
             }`}
           >
             <FilterIcon className="w-3.5 h-3.5" />
-            <span>All Activity ({FORENSIC_LOGS.length})</span>
+            <span>All Activity ({logs.length})</span>
           </button>
 
           <button

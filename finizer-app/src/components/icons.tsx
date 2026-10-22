@@ -239,6 +239,15 @@ export const TrashIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
+/** Edit / Edit-2 — update record */
+export const EditIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M13.26 3.59l7.15 7.15-9.67 9.67c-.38.38-.89.6-1.42.6H4.25c-.69 0-1.25-.56-1.25-1.25v-5.07c0-.53.22-1.04.6-1.42l9.66-9.68z" opacity="0.4" />
+    <path d="M19.7 7.46l-3.16-3.16 1.76-1.76c.78-.78 2.05-.78 2.83 0l.33.33c.78.78.78 2.05 0 2.83l-1.76 1.76z" />
+    <path d="M11.88 4.97l7.15 7.15" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+  </svg>
+);
+
 /** Printer — daily ledger printing, PDF generation */
 export const PrinterIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>

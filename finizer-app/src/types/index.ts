@@ -8,7 +8,9 @@ export type AuditAction = 'CREATED' | 'EDITED' | 'SOFT_DELETED';
 export interface Account {
   id: string;
   name: string;
+  type?: 'cash' | 'bank' | 'upi' | string;
   current_balance: number;
+  is_active?: boolean;
   created_at: string;
 }
 
@@ -16,7 +18,8 @@ export interface Category {
   id: string;
   name: string;
   type: CategoryType;
-  is_system_default: boolean;
+  is_active?: boolean;
+  is_system_default?: boolean;
 }
 
 export interface Transaction {
@@ -29,6 +32,7 @@ export interface Transaction {
   description?: string | null;
   vendor_gst_number?: string | null;
   receipt_image_url?: string | null;
+  receipt_url?: string | null;
   is_deleted: boolean;
   created_at: string;
   updated_at: string;
@@ -56,6 +60,7 @@ export interface GoodsReceipt {
   received_date: string;
   challan_number?: string | null;
   receipt_image_url?: string | null;
+  receipt_url?: string | null;
   notes?: string | null;
   received_by?: string;
 }
@@ -105,6 +110,7 @@ export interface CreateTransactionDTO {
   description?: string;
   vendor_gst_number?: string;
   receipt_image_url?: string;
+  receipt_url?: string;
 }
 
 export interface CreatePurchaseOrderDTO {
@@ -118,6 +124,7 @@ export interface LogGoodsReceiptDTO {
   amount: number;
   challan_number?: string;
   receipt_image_url?: string;
+  receipt_url?: string;
   notes?: string;
 }
 

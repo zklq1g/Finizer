@@ -12,7 +12,7 @@ import {
   PercentageSquareIcon,
 } from "../icons";
 import { formatINR } from "../../utils/format";
-import { api } from "@/services/api";
+import { api, getFinancialMetrics, type FinancialMetrics } from "@/services/api";
 import { useActor } from "@/context/ActorContext";
 
 interface AccountItem {
@@ -24,6 +24,7 @@ interface AccountItem {
 interface MonthEndAllocatorProps {
   onBack: () => void;
   onSuccess?: (summary: { month: string; netProfit: number; payout: number }) => void;
+  targetMonth?: Date;
 }
 
 const DEFAULT_ACCOUNTS: AccountItem[] = [
@@ -32,15 +33,35 @@ const DEFAULT_ACCOUNTS: AccountItem[] = [
   { id: "acc-3", name: "PhonePe UPI", balance: 42000 },
 ];
 
-export default function MonthEndAllocator({ onBack, onSuccess }: MonthEndAllocatorProps) {
+export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: MonthEndAllocatorProps) {
   const { actor } = useActor();
-  const today = new Date();
-  const currentMonth = today.toLocaleString("en-IN", { month: "long" });
-  const currentYear = today.getFullYear();
+  const targetDate = targetMonth || new Date();
+  const currentMonth = targetDate.toLocaleString("en-IN", { month: "long" });
+  const currentYear = targetDate.getFullYear();
 
-  // Simulated Net Profit: Defaults to profitable month, with interactive test toggle
-  const [isTestLossMonth, setIsTestLossMonth] = useState<boolean>(false);
-  const netProfit = isTestLossMonth ? -40000 : 500000;
+  const [metrics, setMetrics] = useState<FinancialMetrics | null>(null);
+  const [loadingMetrics, setLoadingMetrics] = useState<boolean>(true);
+
+  useEffect(() => {
+    async function loadMetrics() {
+      try {
+        setLoadingMetrics(true);
+        const startDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1).toISOString().split("T")[0];
+        const endDate = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).toISOString().split("T")[0];
+        const data = await getFinancialMetrics(startDate, endDate);
+        setMetrics(data);
+      } catch (err) {
+        console.error("Failed to load metrics for month closure:", err);
+      } finally {
+        setLoadingMetrics(false);
+      }
+    }
+    loadMetrics();
+  }, [targetDate]);
+
+  const monthlyIncome = metrics?.monthly_income || 0;
+  const monthlyExpense = metrics?.monthly_expense || 0;
+  const netProfit = monthlyIncome - monthlyExpense;
   const isLossMonth = netProfit < 0;
 
   const [accounts, setAccounts] = useState<AccountItem[]>(DEFAULT_ACCOUNTS);
@@ -133,8 +154,8 @@ export default function MonthEndAllocator({ onBack, onSuccess }: MonthEndAllocat
     try {
       await api.closeMonth(
         {
-          month: today.getMonth() + 1,
-          year: today.getFullYear(),
+          month: targetDate.getMonth() + 1,
+          year: targetDate.getFullYear(),
           net_profit: netProfit,
           alloc_opex: amtOpex,
           alloc_salaries: amtSalaries,
@@ -163,6 +184,18 @@ export default function MonthEndAllocator({ onBack, onSuccess }: MonthEndAllocat
   };
 
   // ─────────────────────────────────────────────
+  // LOADING STATE
+  // ─────────────────────────────────────────────
+  if (loadingMetrics) {
+    return (
+      <div className="fixed inset-0 z-50 bg-[#F8F9FA] flex flex-col items-center justify-center p-6 text-[#99969E] animate-fade-in">
+        <SpinnerIcon className="w-8 h-8 animate-spin mb-3 text-[#5F33E1]" />
+        <p className="text-xs font-semibold">Calculating live finances for closure...</p>
+      </div>
+    );
+  }
+
+  // ─────────────────────────────────────────────
   // LOSS MONTH VIEW (Acknowledge & Absorb Protocol)
   // ─────────────────────────────────────────────
   if (isLossMonth) {
@@ -183,29 +216,33 @@ export default function MonthEndAllocator({ onBack, onSuccess }: MonthEndAllocat
               <p className="text-xs text-[#99969E] font-medium">{currentMonth} {currentYear}</p>
             </div>
           </div>
-
-          {/* Test toggle */}
-          <button
-            onClick={() => setIsTestLossMonth(false)}
-            className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#EDE8FB] text-[#5F33E1]"
-          >
-            Switch to Profit Mode
-          </button>
         </header>
 
         {/* Loss Protocol Body */}
         <main className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-sm mx-auto">
-          <div className="w-16 h-16 rounded-full bg-[#FEF2F2] border border-[#FEE2E2] flex items-center justify-center mb-4">
-            <AlertTriangleIcon className="w-8 h-8 text-[#DC2626]" />
+          <div className="w-16 h-16 rounded-full bg-[#EDE8FB] border border-[#5F33E1]/20 flex items-center justify-center mb-4">
+            <AlertTriangleIcon className="w-8 h-8 text-[#5F33E1]" />
           </div>
 
           <h2 className="text-2xl font-black text-[#120D26] mb-2">
             Operational Loss Detected
           </h2>
 
-          <p className="text-3xl font-black text-[#DC2626] mb-4">
+          <p className="text-3xl font-black text-[#120D26] mb-3">
             - {formatINR(Math.abs(netProfit))}
           </p>
+
+          {/* Income vs Expense breakdown */}
+          <div className="w-full bg-[#EDE8FB]/60 border border-[#5F33E1]/20 p-3.5 rounded-2xl mb-4 text-xs">
+            <div className="flex justify-between items-center mb-1.5">
+              <span className="text-[#524E59] font-medium">Month Income</span>
+              <span className="font-extrabold text-[#5F33E1]">{formatINR(monthlyIncome)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#524E59] font-medium">Month Expenses</span>
+              <span className="font-extrabold text-[#120D26]">{formatINR(monthlyExpense)}</span>
+            </div>
+          </div>
 
           <div className="bg-white p-4 rounded-2xl border border-[#F2F0F5] text-left text-xs text-[#524E59] space-y-2 mb-6">
             <p className="font-bold text-[#120D26]">Proper Accounting Protocol:</p>
@@ -223,7 +260,7 @@ export default function MonthEndAllocator({ onBack, onSuccess }: MonthEndAllocat
           </div>
 
           {errorMessage && (
-            <div className="p-3 mb-4 w-full bg-red-50 border border-red-200 rounded-2xl text-xs text-red-600 font-bold">
+            <div className="p-3 mb-4 w-full bg-[#EDE8FB] border border-[#5F33E1]/30 rounded-2xl text-xs text-[#5F33E1] font-bold">
               {errorMessage}
             </div>
           )}
@@ -231,11 +268,11 @@ export default function MonthEndAllocator({ onBack, onSuccess }: MonthEndAllocat
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="w-full py-4 rounded-2xl bg-[#120D26] text-white font-bold text-sm shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-2xl bg-[#5F33E1] text-white font-bold text-sm shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-[#5029C9]"
           >
             {isSubmitting ? (
               <>
-                <SpinnerIcon className="w-5 h-5 text-white" />
+                <SpinnerIcon className="w-5 h-5 text-white animate-spin" />
                 <span>Recording Loss Snapshot...</span>
               </>
             ) : (
@@ -270,14 +307,6 @@ export default function MonthEndAllocator({ onBack, onSuccess }: MonthEndAllocat
             <p className="text-xs text-[#99969E] font-medium">{currentMonth} {currentYear}</p>
           </div>
         </div>
-
-        {/* Test toggle */}
-        <button
-          onClick={() => setIsTestLossMonth(true)}
-          className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#FEF2F2] text-[#DC2626] border border-[#FEE2E2]"
-        >
-          Test Loss Mode
-        </button>
       </header>
 
       {/* 2. Scrollable Allocation Body */}
@@ -288,6 +317,18 @@ export default function MonthEndAllocator({ onBack, onSuccess }: MonthEndAllocat
             <span>{errorMessage}</span>
           </div>
         )}
+
+        {/* Income vs Expenses breakdown */}
+        <div className="bg-white rounded-2xl p-4 border border-[#F2F0F5] shadow-xs">
+          <div className="flex justify-between items-center text-xs mb-2">
+            <span className="text-[#99969E] font-semibold">Total Revenue / Income</span>
+            <span className="font-extrabold text-[#5F33E1] text-sm">{formatINR(monthlyIncome)}</span>
+          </div>
+          <div className="flex justify-between items-center text-xs">
+            <span className="text-[#99969E] font-semibold">Total Store Expenses</span>
+            <span className="font-extrabold text-[#120D26] text-sm">{formatINR(monthlyExpense)}</span>
+          </div>
+        </div>
 
         {/* Hero Card: Net Profit & Mode Toggle */}
         <div className="bg-white rounded-3xl p-5 border border-[#F2F0F5] shadow-xs">

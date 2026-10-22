@@ -1,27 +1,40 @@
 "use client";
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import {
-  WalletIcon,
-  ReceiptIcon,
+  UserOctagonIcon,
   TrendUpIcon,
   CardSendIcon,
   PrinterIcon,
   ShieldTickIcon,
+  WalletIcon,
+  ReceiptIcon,
   ChevronRightIcon,
-  UserOctagonIcon,
   SpinnerIcon,
+  EditIcon,
+  TrashIcon,
 } from "../icons";
 import MonthEndAllocator from "./MonthEndAllocator";
-import { api } from "@/services/api";
+import AccountSheet from "../sheets/AccountSheet";
+import CategorySheet from "../sheets/CategorySheet";
+import {
+  api,
+  getAccounts,
+  getCategories,
+  saveAccount,
+  saveCategory,
+  type Account,
+  type Category,
+} from "@/services/api";
 import { exportTransactionsToCSV } from "@/utils/exportCSV";
 import { useActor } from "@/context/ActorContext";
+import { formatINR } from "@/utils/format";
 import type { Transaction } from "@/types";
 
 interface SettingsTabProps {
   onOpenActivityLog: () => void;
 }
 
-// Sample fallback transactions for immediate export testing if database is fresh
 const FALLBACK_TRANSACTIONS: Transaction[] = [
   {
     id: "tx-101",
@@ -53,39 +66,7 @@ const FALLBACK_TRANSACTIONS: Transaction[] = [
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     accounts: { name: "HDFC Bank Account" },
-    categories: { name: "Operating Expenses", type: "OPERATING_EXPENSE" },
-  },
-  {
-    id: "tx-103",
-    account_id: "acc-1",
-    category_id: "cat-3",
-    amount: 850,
-    type: "EXPENSE",
-    date: "2026-10-19",
-    description: "Store tea & snacks for staff",
-    vendor_gst_number: null,
-    receipt_image_url: null,
-    is_deleted: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    accounts: { name: "Main Cash Drawer" },
-    categories: { name: "Staff Welfare", type: "OPERATING_EXPENSE" },
-  },
-  {
-    id: "tx-104",
-    account_id: "acc-3",
-    category_id: "cat-1",
-    amount: 28500,
-    type: "INCOME",
-    date: "2026-10-19",
-    description: "PhonePe QR Customer Settlements",
-    vendor_gst_number: null,
-    receipt_image_url: null,
-    is_deleted: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    accounts: { name: "PhonePe UPI" },
-    categories: { name: "Sales Revenue", type: "INCOME" },
+    categories: { name: "Repairs & Maintenance", type: "OPERATING_EXPENSE" },
   },
 ];
 
@@ -95,9 +76,60 @@ export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
   const [showAllocator, setShowAllocator] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
 
+  // Accounts & Categories CRUD States
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCrud, setLoadingCrud] = useState<boolean>(true);
+
+  // Sheet States
+  const [accountSheetOpen, setAccountSheetOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+  const [categorySheetOpen, setCategorySheetOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const fetchCrudData = async () => {
+    try {
+      const [accs, cats] = await Promise.all([getAccounts(), getCategories()]);
+      setAccounts(accs);
+      setCategories(cats);
+    } catch (err) {
+      console.error("Failed to load accounts/categories:", err);
+    } finally {
+      setLoadingCrud(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCrudData();
+  }, []);
+
+  const handleDeleteAccount = async (id: string, name: string) => {
+    if (confirm(`Archive account "${name}"? It will be hidden from new transaction selection.`)) {
+      try {
+        await saveAccount("delete", { id });
+        showToast(`Archived account: ${name}`);
+        fetchCrudData();
+      } catch {
+        showToast("Failed to archive account.");
+      }
+    }
+  };
+
+  const handleDeleteCategory = async (id: string, name: string) => {
+    if (confirm(`Archive category "${name}"? Existing transactions will retain their historical links.`)) {
+      try {
+        await saveCategory("delete", { id });
+        showToast(`Archived category: ${name}`);
+        fetchCrudData();
+      } catch {
+        showToast("Failed to archive category.");
+      }
+    }
   };
 
   const handleExportCA = async () => {
@@ -143,20 +175,20 @@ export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
   }
 
   return (
-    <div className="flex flex-col gap-6 animate-fade-in">
+    <div className="flex flex-col gap-6 animate-fade-in pb-12">
       <div>
         <h1 className="text-2xl font-black text-[#120D26]">Settings</h1>
         <p className="text-xs text-[#99969E] font-medium">Store Operations & Accounting</p>
       </div>
 
       {toastMessage && (
-        <div className="bg-[#DCFCE7] text-[#16A34A] text-xs font-bold p-3.5 rounded-2xl border border-[#BBF7D0] animate-fade-in shadow-sm">
+        <div className="bg-[#DCFCE7] text-[#16A34A] text-xs font-bold p-3.5 rounded-2xl border border-[#BBF7D0] animate-fade-in shadow-xs">
           {toastMessage}
         </div>
       )}
 
-      {/* Partner Trust Profile Switcher */}
-      <div className="bg-white rounded-2xl p-4 border border-[#F2F0F5] shadow-sm space-y-2">
+      {/* 1. Partner Trust Profile Switcher */}
+      <div className="bg-white rounded-2xl p-4 border border-[#F2F0F5] shadow-xs space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-bold text-[#120D26]">
             <UserOctagonIcon className="w-4 h-4 text-[#5F33E1]" />
@@ -179,7 +211,7 @@ export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
               }}
               className={`text-xs px-3 py-1.5 rounded-xl font-bold transition-all ${
                 actor === a
-                  ? "bg-[#5F33E1] text-white shadow-sm shadow-[#5F33E1]/20"
+                  ? "bg-[#5F33E1] text-white shadow-xs shadow-[#5F33E1]/20"
                   : "bg-[#F5F2FF] text-[#120D26] hover:bg-[#EDE8FB]"
               }`}
             >
@@ -189,16 +221,16 @@ export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
         </div>
       </div>
 
-      {/* Primary Section: Accounting & Monthly Rituals */}
+      {/* 2. Primary Section: Accounting & Monthly Rituals */}
       <div className="space-y-3">
         <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#99969E]">
           Accounting & Reports
         </span>
 
-        {/* 1. Month-End Profit Allocator */}
+        {/* Month-End Profit Allocator */}
         <button
           onClick={() => setShowAllocator(true)}
-          className="w-full bg-white rounded-2xl p-4 flex items-center justify-between border border-[#F2F0F5] hover:border-gray-300 transition-all text-left shadow-sm group"
+          className="w-full bg-white rounded-2xl p-4 flex items-center justify-between border border-[#F2F0F5] hover:border-gray-300 transition-all text-left shadow-xs group"
         >
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-xl bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1]">
@@ -216,11 +248,11 @@ export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
           <ChevronRightIcon className="w-5 h-5 text-gray-400 group-hover:text-[#5F33E1] transition-colors shrink-0" />
         </button>
 
-        {/* 2. Export for CA */}
+        {/* Export for CA */}
         <button
           onClick={handleExportCA}
           disabled={isExporting}
-          className="w-full bg-white rounded-2xl p-4 flex items-center justify-between border border-[#F2F0F5] hover:border-gray-300 transition-all text-left shadow-sm group disabled:opacity-50"
+          className="w-full bg-white rounded-2xl p-4 flex items-center justify-between border border-[#F2F0F5] hover:border-gray-300 transition-all text-left shadow-xs group disabled:opacity-50"
         >
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-xl bg-[#F5F2FF] flex items-center justify-center text-[#5F33E1]">
@@ -242,10 +274,10 @@ export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
           <ChevronRightIcon className="w-5 h-5 text-gray-400 group-hover:text-[#5F33E1] transition-colors shrink-0" />
         </button>
 
-        {/* 3. Print Daily Ledger */}
+        {/* Print Daily Ledger */}
         <button
           onClick={handlePrintDaily}
-          className="w-full bg-white rounded-2xl p-4 flex items-center justify-between border border-[#F2F0F5] hover:border-gray-300 transition-all text-left shadow-sm group"
+          className="w-full bg-white rounded-2xl p-4 flex items-center justify-between border border-[#F2F0F5] hover:border-gray-300 transition-all text-left shadow-xs group"
         >
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-xl bg-[#F5F2FF] flex items-center justify-center text-[#5F33E1]">
@@ -264,75 +296,171 @@ export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
         </button>
       </div>
 
-      {/* Secondary Section: Store Setup */}
-      <div className="space-y-3">
-        <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#99969E]">
-          Store Configuration
-        </span>
+      {/* 3. Manage Accounts CRUD */}
+      <section className="space-y-3">
+        <div className="flex justify-between items-center">
+          <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#99969E] flex items-center gap-1.5">
+            <WalletIcon className="w-3.5 h-3.5 text-[#5F33E1]" /> Payment Accounts
+          </span>
+          <button
+            onClick={() => {
+              setEditingAccount(null);
+              setAccountSheetOpen(true);
+            }}
+            className="text-xs font-bold text-[#5F33E1] hover:underline bg-[#EDE8FB] px-3 py-1 rounded-full"
+          >
+            + Add Account
+          </button>
+        </div>
 
-        {/* Manage Accounts */}
-        <button
-          onClick={() => showToast("Accounts active: Cash Drawer, HDFC Bank, PhonePe UPI")}
-          className="w-full bg-white rounded-2xl p-4 flex items-center justify-between border border-[#F2F0F5] hover:border-gray-300 transition-all text-left shadow-sm group"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1]">
-              <WalletIcon className="w-5 h-5 text-[#5F33E1]" />
+        <div className="bg-white border border-[#F2F0F5] rounded-2xl divide-y divide-[#F2F0F5] overflow-hidden shadow-xs">
+          {loadingCrud ? (
+            <div className="p-4 flex items-center justify-center text-gray-400">
+              <SpinnerIcon className="w-5 h-5 animate-spin text-[#5F33E1]" />
             </div>
-            <div>
-              <p className="text-xs font-bold text-[#120D26] group-hover:text-[#5F33E1] transition-colors">
-                Manage Accounts
-              </p>
-              <p className="text-[11px] text-[#99969E]">
-                Cash Drawer, Bank Accounts, Store QR UPI
-              </p>
-            </div>
-          </div>
-          <ChevronRightIcon className="w-5 h-5 text-gray-400 group-hover:text-[#5F33E1] transition-colors shrink-0" />
-        </button>
+          ) : accounts.length === 0 ? (
+            <p className="p-4 text-xs text-[#99969E] text-center">No payment accounts configured yet</p>
+          ) : (
+            accounts.map((acc) => (
+              <div key={acc.id} className="p-3.5 flex justify-between items-center hover:bg-[#F9F9FB] transition-colors">
+                <div className="min-w-0 pr-2">
+                  <p className="text-xs font-bold text-[#120D26] truncate">{acc.name}</p>
+                  <p className="text-[10px] text-[#99969E] uppercase font-semibold mt-0.5">
+                    {acc.type || "channel"} · <span className="text-[#120D26] font-bold">{formatINR(acc.current_balance)}</span>
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-gray-400 shrink-0">
+                  <button
+                    onClick={() => {
+                      setEditingAccount(acc);
+                      setAccountSheetOpen(true);
+                    }}
+                    title="Edit Account"
+                    className="p-1.5 rounded-lg hover:bg-gray-100 hover:text-[#5F33E1] transition-colors"
+                  >
+                    <EditIcon className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteAccount(acc.id, acc.name)}
+                    title="Archive Account"
+                    className="p-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
 
-        {/* Manage Categories */}
-        <button
-          onClick={() => showToast("11 system categories configured for Indian retail")}
-          className="w-full bg-white rounded-2xl p-4 flex items-center justify-between border border-[#F2F0F5] hover:border-gray-300 transition-all text-left shadow-sm group"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1]">
-              <ReceiptIcon className="w-5 h-5 text-[#5F33E1]" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-[#120D26] group-hover:text-[#5F33E1] transition-colors">
-                Manage Expense Categories
-              </p>
-              <p className="text-[11px] text-[#99969E]">
-                Sales, Inventory, Rent, Salaries, Electricity, Transportation
-              </p>
-            </div>
-          </div>
-          <ChevronRightIcon className="w-5 h-5 text-gray-400 group-hover:text-[#5F33E1] transition-colors shrink-0" />
-        </button>
+      {/* 4. Manage Categories CRUD */}
+      <section className="space-y-3">
+        <div className="flex justify-between items-center">
+          <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#99969E] flex items-center gap-1.5">
+            <ReceiptIcon className="w-3.5 h-3.5 text-[#5F33E1]" /> Categories
+          </span>
+          <button
+            onClick={() => {
+              setEditingCategory(null);
+              setCategorySheetOpen(true);
+            }}
+            className="text-xs font-bold text-[#5F33E1] hover:underline bg-[#EDE8FB] px-3 py-1 rounded-full"
+          >
+            + Add Category
+          </button>
+        </div>
 
-        {/* Partner Trust Quick Access */}
-        <button
-          onClick={onOpenActivityLog}
-          className="w-full bg-[#F5F2FF] rounded-2xl p-4 flex items-center justify-between border border-[#EDE8FB] hover:border-[#5F33E1] transition-all text-left shadow-sm group"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1]">
-              <ShieldTickIcon className="w-5 h-5 text-[#5F33E1]" />
+        <div className="bg-white border border-[#F2F0F5] rounded-2xl divide-y divide-[#F2F0F5] overflow-hidden shadow-xs max-h-80 overflow-y-auto scrollbar-hide">
+          {loadingCrud ? (
+            <div className="p-4 flex items-center justify-center text-gray-400">
+              <SpinnerIcon className="w-5 h-5 animate-spin text-[#5F33E1]" />
             </div>
-            <div>
-              <p className="text-xs font-bold text-[#5F33E1]">
-                Partner Audit Log (Trust System)
-              </p>
-              <p className="text-[11px] text-[#7C5CE8]">
-                View immutable edit & deletion history
-              </p>
-            </div>
+          ) : categories.length === 0 ? (
+            <p className="p-4 text-xs text-[#99969E] text-center">No categories configured</p>
+          ) : (
+            categories.map((cat) => {
+              const isIncome = cat.type === "INCOME";
+              return (
+                <div key={cat.id} className="p-3.5 flex justify-between items-center hover:bg-[#F9F9FB] transition-colors">
+                  <div className="min-w-0 pr-2">
+                    <p className="text-xs font-bold text-[#120D26] truncate">{cat.name}</p>
+                    <span
+                      className={`inline-block text-[9px] uppercase font-extrabold px-2 py-0.5 rounded-full mt-0.5 ${
+                        isIncome
+                          ? "bg-[#EDE8FB] text-[#5F33E1]"
+                          : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {cat.type}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-400 shrink-0">
+                    <button
+                      onClick={() => {
+                        setEditingCategory(cat);
+                        setCategorySheetOpen(true);
+                      }}
+                      title="Edit Category"
+                      className="p-1.5 rounded-lg hover:bg-gray-100 hover:text-[#5F33E1] transition-colors"
+                    >
+                      <EditIcon className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                      title="Archive Category"
+                      className="p-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </section>
+
+      {/* 5. Partner Trust Quick Access */}
+      <button
+        onClick={onOpenActivityLog}
+        className="w-full bg-[#F5F2FF] rounded-2xl p-4 flex items-center justify-between border border-[#EDE8FB] hover:border-[#5F33E1] transition-all text-left shadow-xs group"
+      >
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1]">
+            <ShieldTickIcon className="w-5 h-5 text-[#5F33E1]" />
           </div>
-          <ChevronRightIcon className="w-5 h-5 text-[#5F33E1] shrink-0" />
-        </button>
-      </div>
+          <div>
+            <p className="text-xs font-bold text-[#5F33E1]">
+              Partner Audit Log (Trust System)
+            </p>
+            <p className="text-[11px] text-[#7C5CE8]">
+              View immutable edit & deletion history
+            </p>
+          </div>
+        </div>
+        <ChevronRightIcon className="w-5 h-5 text-[#5F33E1] shrink-0" />
+      </button>
+
+      {/* Interactive Bottom Sheets */}
+      <AccountSheet
+        isOpen={accountSheetOpen}
+        onClose={() => setAccountSheetOpen(false)}
+        account={editingAccount}
+        onSuccess={() => {
+          fetchCrudData();
+          showToast(editingAccount ? "Account updated successfully" : "New account created");
+        }}
+      />
+      <CategorySheet
+        isOpen={categorySheetOpen}
+        onClose={() => setCategorySheetOpen(false)}
+        category={editingCategory}
+        onSuccess={() => {
+          fetchCrudData();
+          showToast(editingCategory ? "Category updated successfully" : "New category created");
+        }}
+      />
     </div>
   );
 }

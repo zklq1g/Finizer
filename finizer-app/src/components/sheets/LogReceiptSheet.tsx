@@ -2,12 +2,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import { TruckIcon, CloseIcon, CameraIcon, CheckIcon, SpinnerIcon } from "../icons";
 import { formatINR } from "../../utils/format";
+import { useActor } from "@/context/ActorContext";
+import { uploadReceipt } from "@/services/api";
 
 export interface LogReceiptData {
   poId: string;
   amount: number;
   challanNumber?: string;
   receiptFile: File | null;
+  receiptUrl?: string | null;
   notes: string;
   actor: string;
 }
@@ -32,9 +35,12 @@ export default function LogReceiptSheet({
   onClose,
   onSave,
 }: LogReceiptSheetProps) {
+  const { actor } = useActor();
   const [amount, setAmount] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const amountRef = useRef<HTMLInputElement>(null);
@@ -75,14 +81,28 @@ export default function LogReceiptSheet({
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setReceiptFile(e.target.files[0]);
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setReceiptFile(file);
+    setIsUploading(true);
+    try {
+      const url = await uploadReceipt(file);
+      setReceiptUrl(url);
+    } catch (err) {
+      console.error("Failed to upload delivery receipt:", err);
+      alert("Failed to upload delivery receipt image. Please try again.");
+      setReceiptFile(null);
+      setReceiptUrl(null);
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isUploading) return;
     const parsedAmount = parseFloat(amount);
     if (!amount || isNaN(parsedAmount) || parsedAmount <= 0 || isSubmitting) {
       return;
@@ -94,14 +114,17 @@ export default function LogReceiptSheet({
         poId: po.id,
         amount: parsedAmount,
         receiptFile,
+        receiptUrl,
         notes: notes.trim(),
-        actor: "Owner (Main Counter)", // Attribution for forensic audit log
+        actor, // Attribution for forensic audit log
       });
 
       // Reset & Close
       setAmount("");
       setNotes("");
       setReceiptFile(null);
+      setReceiptUrl(null);
+      setIsUploading(false);
       onClose();
     } catch (err) {
       console.error("Failed to log goods receipt", err);
@@ -145,7 +168,7 @@ export default function LogReceiptSheet({
         </div>
 
         {/* 2. Scrollable Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-hide">
+        <form id="log-receipt-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-hide">
           
           {/* A. Context Banner */}
           <div className="bg-[#FEF3C7] border border-[#FDE68A] p-4 rounded-2xl flex items-start gap-3">
@@ -226,21 +249,29 @@ export default function LogReceiptSheet({
 
             <button
               type="button"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploading}
               onClick={() => {
                 if (receiptFile) {
                   setReceiptFile(null);
+                  setReceiptUrl(null);
                 } else {
                   fileInputRef.current?.click();
                 }
               }}
               className={`w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl border transition-all text-xs font-bold ${
-                receiptFile
+                isUploading
+                  ? "bg-[#EDE8FB] border-[#5F33E1]/30 text-[#5F33E1]"
+                  : receiptFile
                   ? "bg-[#DCFCE7] border-[#BBF7D0] text-[#16A34A]"
                   : "bg-[#F8F9FA] border-[#F2F0F5] text-gray-500 hover:border-gray-300 hover:text-gray-700"
               }`}
             >
-              {receiptFile ? (
+              {isUploading ? (
+                <>
+                  <SpinnerIcon className="w-4 h-4 text-[#5F33E1] animate-spin shrink-0" />
+                  <span>Uploading Bilty to vault...</span>
+                </>
+              ) : receiptFile ? (
                 <>
                   <CheckIcon className="w-4 h-4 text-[#16A34A] shrink-0" />
                   <span>Receipt Photo Attached (Tap to remove)</span>
@@ -248,7 +279,7 @@ export default function LogReceiptSheet({
               ) : (
                 <>
                   <CameraIcon className="w-4 h-4 shrink-0" />
-                  <span>Snap Delivery Receipt / Photo</span>
+                  <span>Snap Delivery Receipt / Bilty</span>
                 </>
               )}
             </button>
@@ -259,8 +290,9 @@ export default function LogReceiptSheet({
         <div className="p-5 pt-3 pb-8 border-t border-[#F2F0F5] bg-white shrink-0">
           <button
             type="submit"
+            form="log-receipt-form"
             onClick={handleSubmit}
-            disabled={!amount || parseFloat(amount) <= 0 || isSubmitting}
+            disabled={!amount || parseFloat(amount) <= 0 || isSubmitting || isUploading}
             className="w-full py-4 rounded-2xl text-base font-extrabold text-white bg-[#5F33E1] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all shadow-lg shadow-[#5F33E1]/25 hover:bg-[#5029C9] flex items-center justify-center gap-2"
           >
             {isSubmitting ? (

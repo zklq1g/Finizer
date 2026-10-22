@@ -1,7 +1,18 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { ShieldTickIcon, FilterIcon, TrashIcon, LockIcon, CloseIcon, AlertTriangleIcon, UserOctagonIcon, ArrowRightIcon } from "../icons";
-import { api } from "@/services/api";
+import {
+  ShieldTickIcon,
+  FilterIcon,
+  TrashIcon,
+  LockIcon,
+  CloseIcon,
+  AlertTriangleIcon,
+  UserOctagonIcon,
+  ArrowRightIcon,
+  SpinnerIcon,
+} from "../icons";
+import { api, getAuditLog } from "@/services/api";
+import { generateAuditPDF } from "@/utils/generateAuditPDF";
 
 export interface AuditSnapshot {
   amount: number;
@@ -74,6 +85,26 @@ const FORENSIC_LOGS: ForensicLog[] = [
 export default function ActivityLogModal({ isOpen, onClose }: ActivityLogModalProps) {
   const [filter, setFilter] = useState<"ALL" | "SUSPICIOUS">("ALL");
   const [logs, setLogs] = useState<ForensicLog[]>(FORENSIC_LOGS);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+
+  const handleExportAuditPDF = async () => {
+    try {
+      setIsExporting(true);
+      const end = new Date();
+      const start = new Date();
+      start.setDate(start.getDate() - 30);
+      const startStr = start.toISOString().split("T")[0];
+      const endStr = end.toISOString().split("T")[0];
+
+      const entries = await getAuditLog(startStr, endStr);
+      await generateAuditPDF(entries, startStr, endStr);
+    } catch (err) {
+      console.error("Failed to generate audit PDF:", err);
+      alert("Failed to generate forensic audit PDF. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   // Load real audit records from Supabase
   useEffect(() => {
@@ -365,11 +396,21 @@ export default function ActivityLogModal({ isOpen, onClose }: ActivityLogModalPr
         {/* FOOTER: Export Audit Proof */}
         <div className="p-4 border-t border-[#F2F0F5] bg-white shrink-0">
           <button
-            onClick={() => alert("Generating Signed Partner Audit Report (PDF)...")}
-            className="w-full py-3.5 rounded-2xl border border-[#EDE8FB] hover:border-[#5F33E1] bg-[#F5F2FF] text-xs font-bold text-[#5F33E1] flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+            onClick={handleExportAuditPDF}
+            disabled={isExporting}
+            className="w-full py-3.5 rounded-2xl border border-[#EDE8FB] hover:border-[#5F33E1] bg-[#F5F2FF] text-xs font-bold text-[#5F33E1] flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
           >
-            <ShieldTickIcon className="w-4 h-4 text-[#5F33E1]" />
-            <span>Export Signed Audit Report for Partners (PDF)</span>
+            {isExporting ? (
+              <>
+                <SpinnerIcon className="w-4 h-4 text-[#5F33E1] animate-spin" />
+                <span>Generating Cryptographic SHA-256 PDF...</span>
+              </>
+            ) : (
+              <>
+                <ShieldTickIcon className="w-4 h-4 text-[#5F33E1]" />
+                <span>Export Signed Audit Report for Partners (PDF)</span>
+              </>
+            )}
           </button>
         </div>
       </div>

@@ -19,6 +19,7 @@ export const api = {
     const { data, error } = await supabase
       .from('accounts')
       .select('*')
+      .neq('is_active', false)
       .order('created_at', { ascending: true });
 
     if (error) {
@@ -32,6 +33,7 @@ export const api = {
     const { data, error } = await supabase
       .from('categories')
       .select('*')
+      .neq('is_active', false)
       .order('is_system_default', { ascending: false })
       .order('name', { ascending: true });
 
@@ -40,6 +42,20 @@ export const api = {
       throw error;
     }
     return data || [];
+  },
+
+  async saveAccount(
+    action: 'create' | 'update' | 'delete',
+    payload: { id?: string; name?: string; type?: string; is_active?: boolean }
+  ): Promise<string> {
+    return saveAccount(action, payload);
+  },
+
+  async saveCategory(
+    action: 'create' | 'update' | 'delete',
+    payload: { id?: string; name?: string; type?: string; is_active?: boolean }
+  ): Promise<string> {
+    return saveCategory(action, payload);
   },
 
   // --- TRANSACTIONS ---
@@ -73,7 +89,7 @@ export const api = {
       p_actor: actor,
       p_description: dto.description || null,
       p_vendor_gst_number: dto.vendor_gst_number || null,
-      p_receipt_image_url: dto.receipt_image_url || null,
+      p_receipt_image_url: dto.receipt_url || dto.receipt_image_url || null,
     });
 
     if (error) {
@@ -131,7 +147,7 @@ export const api = {
       p_received_amount: dto.amount,
       p_actor: actor,
       p_challan_number: dto.challan_number || null,
-      p_receipt_image_url: dto.receipt_image_url || null,
+      p_receipt_image_url: dto.receipt_url || dto.receipt_image_url || null,
       p_notes: dto.notes || null,
     });
 
@@ -191,4 +207,197 @@ export const api = {
     }
     return data || [];
   },
+
+  // --- FINANCIAL METRICS & P&L ---
+  async getFinancialMetrics(startDate: string, endDate: string): Promise<FinancialMetrics> {
+    return getFinancialMetrics(startDate, endDate);
+  },
+
+  // --- STORAGE & RECEIPTS ---
+  async uploadReceipt(file: File): Promise<string> {
+    return uploadReceipt(file);
+  },
+
+  // --- FORENSIC AUDIT TRAIL ---
+  async getAuditLog(startDate: string, endDate: string): Promise<AuditLogEntry[]> {
+    return getAuditLog(startDate, endDate);
+  },
 };
+
+export async function uploadReceipt(file: File): Promise<string> {
+  const fileExt = file.name.split('.').pop() || 'jpg';
+  const fileName = `${crypto.randomUUID()}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('receipts')
+    .upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+  if (uploadError) {
+    console.error('Upload failed:', uploadError);
+    throw new Error(`Upload failed: ${uploadError.message}`);
+  }
+
+  // Generate a signed URL valid for 10 years (315,360,000 seconds)
+  const { data, error: urlError } = await supabase.storage
+    .from('receipts')
+    .createSignedUrl(fileName, 60 * 60 * 24 * 365 * 10);
+
+  if (urlError || !data?.signedUrl) {
+    console.error('URL generation failed:', urlError);
+    throw new Error(`URL generation failed: ${urlError?.message || 'Unknown error'}`);
+  }
+
+  return data.signedUrl;
+}
+
+export async function createFinancialTransaction(payload: {
+  p_type: 'income' | 'expense' | 'INCOME' | 'EXPENSE';
+  p_amount: number;
+  p_account_id: string;
+  p_category_id: string;
+  p_description?: string;
+  p_transaction_date?: string;
+  p_date?: string;
+  p_actor: string;
+  p_receipt_url?: string;
+  p_vendor_gst_number?: string;
+}) {
+  const dto: CreateTransactionDTO = {
+    account_id: payload.p_account_id,
+    category_id: payload.p_category_id,
+    amount: payload.p_amount,
+    type: (payload.p_type.toUpperCase() as 'INCOME' | 'EXPENSE'),
+    date: payload.p_transaction_date || payload.p_date || new Date().toISOString().split('T')[0],
+    description: payload.p_description,
+    vendor_gst_number: payload.p_vendor_gst_number,
+    receipt_url: payload.p_receipt_url,
+  };
+  return api.createTransaction(dto, payload.p_actor);
+}
+
+export interface FinancialMetrics {
+  total_cash: number;
+  inventory_value: number;
+  monthly_income: number;
+  monthly_expense: number;
+}
+
+export async function getFinancialMetrics(startDate: string, endDate: string): Promise<FinancialMetrics> {
+  const { data, error } = await supabase.rpc('get_financial_metrics', {
+    p_start_date: startDate,
+    p_end_date: endDate,
+  });
+
+  if (error) {
+    console.error('Failed to fetch metrics:', error);
+    throw new Error(`Failed to fetch metrics: ${error.message}`);
+  }
+
+  if (!data || data.length === 0) {
+    return { total_cash: 0, inventory_value: 0, monthly_income: 0, monthly_expense: 0 };
+  }
+
+  const row = data[0];
+  return {
+    total_cash: Number(row.total_cash) || 0,
+    inventory_value: Number(row.inventory_value) || 0,
+    monthly_income: Number(row.monthly_income) || 0,
+    monthly_expense: Number(row.monthly_expense) || 0,
+  };
+}
+
+export async function getAccounts(): Promise<Account[]> {
+  return api.getAccounts();
+}
+
+export async function getCategories(): Promise<Category[]> {
+  return api.getCategories();
+}
+
+export async function saveAccount(
+  action: 'create' | 'update' | 'delete',
+  payload: { id?: string; name?: string; type?: string; is_active?: boolean }
+): Promise<string> {
+  const { data, error } = await supabase.rpc('manage_account', {
+    p_action: action,
+    p_id: payload.id || null,
+    p_name: payload.name || null,
+    p_type: payload.type || null,
+    p_is_active: payload.is_active ?? null,
+  });
+
+  if (error) {
+    console.error('Failed to manage account:', error);
+    throw new Error(error.message);
+  }
+  return data as string;
+}
+
+export async function saveCategory(
+  action: 'create' | 'update' | 'delete',
+  payload: { id?: string; name?: string; type?: string; is_active?: boolean }
+): Promise<string> {
+  const { data, error } = await supabase.rpc('manage_category', {
+    p_action: action,
+    p_id: payload.id || null,
+    p_name: payload.name || null,
+    p_type: payload.type || null,
+    p_is_active: payload.is_active ?? null,
+  });
+
+  if (error) {
+    console.error('Failed to manage category:', error);
+    throw new Error(error.message);
+  }
+  return data as string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  transaction_date: string;
+  type: 'income' | 'expense' | 'INCOME' | 'EXPENSE';
+  amount: number;
+  description: string;
+  category_name: string;
+  account_name: string;
+  is_deleted: boolean;
+  created_at: string;
+}
+
+export async function getAuditLog(startDate: string, endDate: string): Promise<AuditLogEntry[]> {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select(`
+      id,
+      date,
+      type,
+      amount,
+      description,
+      is_deleted,
+      created_at,
+      categories ( name ),
+      accounts ( name )
+    `)
+    .gte('date', startDate)
+    .lte('date', endDate)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Failed to fetch audit log:', error);
+    throw new Error(error.message);
+  }
+
+  return (data || []).map((row: any) => ({
+    id: row.id,
+    transaction_date: row.date,
+    type: row.type,
+    amount: Number(row.amount) || 0,
+    description: row.description || 'Transaction',
+    is_deleted: Boolean(row.is_deleted),
+    created_at: row.created_at,
+    category_name: row.categories?.name || 'Uncategorized',
+    account_name: row.accounts?.name || 'Unknown Account',
+  }));
+}
+
+export type { Account, Category } from '@/types';

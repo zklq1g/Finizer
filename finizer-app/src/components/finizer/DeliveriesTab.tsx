@@ -134,6 +134,7 @@ export default function DeliveriesTab() {
           amount: data.amount,
           challan_number: data.challanNumber,
           notes: data.notes,
+          receipt_url: data.receiptUrl || undefined,
         },
         data.actor || actor
       );

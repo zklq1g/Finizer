@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { CameraIcon, CloseIcon, CheckIcon } from "../icons";
-import { api } from "@/services/api";
+import { CameraIcon, CloseIcon, CheckIcon, SpinnerIcon } from "../icons";
+import { api, uploadReceipt } from "@/services/api";
 
 export interface TransactionData {
   type: "EXPENSE" | "INCOME";
@@ -13,6 +13,7 @@ export interface TransactionData {
   date: string;
   note: string;
   receiptFile: File | null;
+  receiptUrl?: string | null;
 }
 
 interface QuickAddSheetProps {
@@ -68,6 +69,8 @@ export default function QuickAddSheet({
   const [categoryId, setCategoryId] = useState<string>(DEFAULT_CATEGORIES.EXPENSE[0].id);
   const [note, setNote] = useState<string>("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
   const amountRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -148,14 +151,28 @@ export default function QuickAddSheet({
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setReceiptFile(e.target.files[0]);
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setReceiptFile(file);
+    setIsUploading(true);
+    try {
+      const url = await uploadReceipt(file);
+      setReceiptUrl(url);
+    } catch (err) {
+      console.error("Failed to upload receipt:", err);
+      alert("Failed to upload receipt image. Please try again.");
+      setReceiptFile(null);
+      setReceiptUrl(null);
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isUploading) return;
     const parsedAmount = parseFloat(amount);
     if (!amount || isNaN(parsedAmount) || parsedAmount <= 0 || !categoryId) return;
 
@@ -172,12 +189,15 @@ export default function QuickAddSheet({
       date: new Date().toISOString().split("T")[0],
       note,
       receiptFile,
+      receiptUrl,
     });
 
     // Reset State
     setAmount("");
     setNote("");
     setReceiptFile(null);
+    setReceiptUrl(null);
+    setIsUploading(false);
     onClose();
   };
 
@@ -216,7 +236,7 @@ export default function QuickAddSheet({
         </div>
 
         {/* 2. SCROLLABLE BODY (Absorbs virtual keyboard shrink) */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar-hide">
+        <form id="quick-add-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar-hide">
           
           {/* A. MASSIVE AMOUNT INPUT */}
           <div className="bg-[#F8F9FA] rounded-2xl p-4 border border-[#F2F0F5] transition-all focus-within:border-[#5F33E1]">
@@ -357,31 +377,37 @@ export default function QuickAddSheet({
             {/* Stateful Camera Button */}
             <button
               type="button"
+              disabled={isUploading}
               onClick={() => {
                 if (receiptFile) {
                   setReceiptFile(null);
+                  setReceiptUrl(null);
                 } else {
                   fileInputRef.current?.click();
                 }
               }}
               className={`w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl border transition-all text-xs font-bold ${
-                receiptFile
+                isUploading
+                  ? "bg-[#EDE8FB] border-[#5F33E1]/30 text-[#5F33E1]"
+                  : receiptFile
                   ? "bg-[#DCFCE7] border-[#BBF7D0] text-[#16A34A]"
                   : "bg-[#F8F9FA] border-[#F2F0F5] text-gray-500 hover:border-gray-300 hover:text-gray-700"
               }`}
             >
-              <CameraIcon className="w-4 h-4 shrink-0" />
-              <span className="flex items-center gap-1">
-                {receiptFile ? (
-                  <>
-                    <CheckIcon className="w-3.5 h-3.5 text-[#16A34A]" /> Receipt Added (Tap to remove)
-                  </>
-                ) : (
-                  <>
-                    <span>Snap Receipt (Optional)</span>
-                  </>
-                )}
-              </span>
+              {isUploading ? (
+                <span className="flex items-center gap-2 text-[#5F33E1]">
+                  <SpinnerIcon className="w-4 h-4 animate-spin text-[#5F33E1]" /> Uploading bill to vault...
+                </span>
+              ) : receiptFile ? (
+                <span className="flex items-center gap-1.5 text-[#16A34A]">
+                  <CheckIcon className="w-3.5 h-3.5 text-[#16A34A]" /> Bill Attached (Tap to remove)
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <CameraIcon className="w-4 h-4 shrink-0" />
+                  <span>Snap Photo / Bill (Optional)</span>
+                </span>
+              )}
             </button>
           </div>
 
@@ -391,11 +417,19 @@ export default function QuickAddSheet({
         <div className="p-5 pt-3 pb-8 border-t border-[#F2F0F5] bg-white shrink-0">
           <button
             type="submit"
+            form="quick-add-form"
             onClick={handleSubmit}
-            disabled={!amount || parseFloat(amount) <= 0 || !categoryId}
-            className="w-full py-4 rounded-2xl text-base font-extrabold text-white bg-[#5F33E1] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-transform shadow-lg shadow-[#5F33E1]/25 hover:bg-[#5029C9]"
+            disabled={!amount || parseFloat(amount) <= 0 || !categoryId || isUploading}
+            className="w-full py-4 rounded-2xl text-base font-extrabold text-white bg-[#5F33E1] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-transform shadow-lg shadow-[#5F33E1]/25 hover:bg-[#5029C9] flex items-center justify-center gap-2"
           >
-            Save {type === "INCOME" ? "Income" : "Expense"} Entry
+            {isUploading ? (
+              <>
+                <SpinnerIcon className="w-5 h-5 text-white animate-spin" />
+                <span>Uploading Receipt...</span>
+              </>
+            ) : (
+              <span>Save {type === "INCOME" ? "Income" : "Expense"} Entry</span>
+            )}
           </button>
         </div>
 

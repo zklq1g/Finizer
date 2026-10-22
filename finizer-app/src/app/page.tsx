@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import {
   HomeIcon,
@@ -106,6 +105,7 @@ export default function FinizerApp() {
           type: data.type,
           date: data.date,
           description: data.note,
+          receipt_url: data.receiptUrl || undefined,
         },
         actor
       );
@@ -125,26 +125,6 @@ export default function FinizerApp() {
 
   return (
     <div className="min-h-screen bg-[#F0F2F5] flex flex-col items-center justify-center sm:py-6">
-      {/* Dev link to component lab */}
-      <div className="w-full max-w-md px-4 py-2 flex items-center justify-between text-[11px] text-gray-500">
-        <div className="flex items-center gap-1.5">
-          <Image
-            src="/icon.png"
-            alt="Finizer"
-            width={16}
-            height={16}
-            className="w-4 h-4 rounded-xs object-contain"
-          />
-          <span className="font-bold text-[#120D26]">Finizer Retail OS</span>
-        </div>
-        <Link
-          href="/dev-preview"
-          className="text-[#5F33E1] font-semibold hover:underline bg-white px-2.5 py-0.5 rounded-full border border-gray-200 shadow-xs"
-        >
-          View Component Lab & Icons →
-        </Link>
-      </div>
-
       {/* Main Mobile App Frame */}
       <div className="relative w-full max-w-md h-[100dvh] sm:h-[844px] bg-[#F8F9FA] sm:rounded-[40px] shadow-2xl sm:border-4 sm:border-gray-800 flex flex-col overflow-hidden">
         

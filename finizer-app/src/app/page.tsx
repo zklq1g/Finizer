@@ -124,9 +124,9 @@ export default function FinizerApp() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F0F2F5] flex flex-col items-center justify-center sm:py-6">
+    <div className="min-h-screen bg-[#F0F2F5] flex flex-col items-center justify-start sm:justify-center p-0 sm:py-4 sm:px-2 overflow-y-auto">
       {/* Main Mobile App Frame */}
-      <div className="relative w-full max-w-md h-[100dvh] sm:h-[844px] bg-[#F8F9FA] sm:rounded-[40px] shadow-2xl sm:border-4 sm:border-gray-800 flex flex-col overflow-hidden">
+      <div className="relative w-full max-w-md h-[100dvh] sm:h-[min(844px,calc(100vh-2rem))] bg-[#F8F9FA] sm:rounded-[40px] shadow-2xl sm:border-4 sm:border-gray-800 flex flex-col overflow-hidden">
         
         {/* ── 1. GLOBAL TOP BAR ─────────────────────────── */}
         <header className="bg-white px-5 py-3.5 flex items-center justify-between border-b border-[#F2F0F5] sticky top-0 z-30 shrink-0">
@@ -188,7 +188,7 @@ export default function FinizerApp() {
         {/* ── 3. THE IMMUTABLE FAB (Always Quick Add) ────── */}
         <button
           onClick={() => setIsQuickAddOpen(true)}
-          className="absolute bottom-20 left-1/2 -translate-x-1/2 w-14 h-14 bg-[#5F33E1] text-white rounded-full shadow-xl shadow-[#5F33E1]/35 flex items-center justify-center z-40 active:scale-95 transition-transform"
+          className="absolute bottom-5 left-1/2 -translate-x-1/2 w-14 h-14 bg-[#5F33E1] text-white rounded-full shadow-lg shadow-[#5F33E1]/40 border-4 border-white flex items-center justify-center z-40 active:scale-95 transition-transform"
           aria-label="Quick Add Transaction"
         >
           <AddIcon className="w-7 h-7 text-white" />

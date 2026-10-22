@@ -65,15 +65,15 @@ export default function AccountSheet({ isOpen, onClose, account, onSuccess }: Pr
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center pointer-events-auto">
+    <div className="absolute inset-0 z-50 flex items-end justify-center pointer-events-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 h-[100dvh] bg-black/45 backdrop-blur-[2px] transition-opacity animate-fade-in"
+        className="absolute inset-0 bg-black/45 backdrop-blur-[2px] transition-opacity animate-fade-in"
         onClick={!isSubmitting ? onClose : undefined}
       />
 
       {/* Sheet Container */}
-      <div className="relative w-full max-w-md bg-white rounded-t-[32px] shadow-2xl animate-slide-up flex flex-col z-10 overflow-hidden">
+      <div className="relative w-full max-w-md bg-white rounded-t-[32px] shadow-2xl animate-slide-up max-h-[92%] flex flex-col z-10 overflow-hidden">
         {/* Header */}
         <div className="flex flex-col items-center pt-3 pb-3 px-5 border-b border-[#F2F0F5] shrink-0 bg-white">
           <div className="w-10 h-1 bg-[#F2F0F5] rounded-full mb-2" />

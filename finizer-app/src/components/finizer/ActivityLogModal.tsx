@@ -218,15 +218,15 @@ export default function ActivityLogModal({ isOpen, onClose }: ActivityLogModalPr
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center pointer-events-auto">
+    <div className="absolute inset-0 z-50 flex items-end justify-center pointer-events-auto">
       {/* Dimmed backdrop */}
       <div
-        className="fixed inset-0 bg-black/45 backdrop-blur-xs transition-opacity animate-fade-in"
+        className="absolute inset-0 bg-black/45 backdrop-blur-xs transition-opacity animate-fade-in"
         onClick={onClose}
       />
 
       {/* Security Drawer Container */}
-      <div className="relative w-full max-w-md bg-white rounded-t-[32px] shadow-2xl animate-slide-up max-h-[92dvh] flex flex-col z-10 overflow-hidden">
+      <div className="relative w-full max-w-md bg-white rounded-t-[32px] shadow-2xl animate-slide-up max-h-[92%] flex flex-col z-10 overflow-hidden">
         {/* Drag handle */}
         <div className="pt-3 pb-2 px-5 shrink-0 flex flex-col items-center bg-white border-b border-[#F2F0F5]">
           <div

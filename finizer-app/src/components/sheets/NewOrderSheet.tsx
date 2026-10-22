@@ -103,9 +103,9 @@ export default function NewOrderSheet({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
+    <div className="absolute inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
       <div
-        className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl max-h-[90dvh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200"
+        className="w-full max-w-md bg-white rounded-t-3xl max-h-[92%] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200"
         role="dialog"
         aria-modal="true"
       >

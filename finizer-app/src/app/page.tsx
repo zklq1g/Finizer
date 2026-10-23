@@ -20,6 +20,7 @@ import SettingsTab from "../components/finizer/SettingsTab";
 // Modals & Bottom Sheets
 import QuickAddSheet, { TransactionData } from "../components/sheets/QuickAddSheet";
 import ActivityLogModal from "../components/finizer/ActivityLogModal";
+import MonthEndAllocator from "../components/finizer/MonthEndAllocator";
 import { api } from "@/services/api";
 import { useActor } from "@/context/ActorContext";
 
@@ -47,6 +48,7 @@ export default function FinizerApp() {
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
   const [isActivityLogOpen, setIsActivityLogOpen] = useState<boolean>(false);
+  const [isMonthEndOpen, setIsMonthEndOpen] = useState<boolean>(false);
   const [hasRecentEditBadge, setHasRecentEditBadge] = useState<boolean>(false);
   const [lastSyncTime, setLastSyncTime] = useState<string>("Saved just now");
 
@@ -173,6 +175,7 @@ export default function FinizerApp() {
             <HomeTab
               transactions={transactions}
               onNavigateToDeliveries={() => setActiveTab("deliveries")}
+              onOpenMonthEnd={() => setIsMonthEndOpen(true)}
             />
           )}
 
@@ -181,7 +184,10 @@ export default function FinizerApp() {
           {activeTab === "deliveries" && <DeliveriesTab />}
 
           {activeTab === "settings" && (
-            <SettingsTab onOpenActivityLog={() => setIsActivityLogOpen(true)} />
+            <SettingsTab
+              onOpenActivityLog={() => setIsActivityLogOpen(true)}
+              onOpenMonthEnd={() => setIsMonthEndOpen(true)}
+            />
           )}
         </main>
 
@@ -236,6 +242,17 @@ export default function FinizerApp() {
           isOpen={isActivityLogOpen}
           onClose={() => setIsActivityLogOpen(false)}
         />
+
+        {/* ── 7. MONTH-END PROFIT ALLOCATOR FULL-FRAME VIEW ── */}
+        {isMonthEndOpen && (
+          <MonthEndAllocator
+            onBack={() => setIsMonthEndOpen(false)}
+            onSuccess={() => {
+              setIsMonthEndOpen(false);
+              loadData();
+            }}
+          />
+        )}
       </div>
     </div>
   );

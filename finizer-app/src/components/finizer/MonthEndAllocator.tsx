@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   ArrowLeftIcon,
   WalletIcon,
@@ -35,7 +35,10 @@ const DEFAULT_ACCOUNTS: AccountItem[] = [
 
 export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: MonthEndAllocatorProps) {
   const { actor } = useActor();
-  const targetDate = targetMonth || new Date();
+  const targetYear = targetMonth ? targetMonth.getFullYear() : new Date().getFullYear();
+  const targetMonthIndex = targetMonth ? targetMonth.getMonth() : new Date().getMonth();
+
+  const targetDate = useMemo(() => new Date(targetYear, targetMonthIndex, 1), [targetYear, targetMonthIndex]);
   const currentMonth = targetDate.toLocaleString("en-IN", { month: "long" });
   const currentYear = targetDate.getFullYear();
 
@@ -46,9 +49,13 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
     async function loadMetrics() {
       try {
         setLoadingMetrics(true);
-        const startDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1).toISOString().split("T")[0];
-        const endDate = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).toISOString().split("T")[0];
-        const data = await getFinancialMetrics(startDate, endDate);
+        const y = targetYear;
+        const m = targetMonthIndex;
+        const startStr = `${y}-${String(m + 1).padStart(2, "0")}-01`;
+        const lastDay = new Date(y, m + 1, 0).getDate();
+        const endStr = `${y}-${String(m + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+
+        const data = await getFinancialMetrics(startStr, endStr);
         setMetrics(data);
       } catch (err) {
         console.error("Failed to load metrics for month closure:", err);
@@ -57,7 +64,7 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
       }
     }
     loadMetrics();
-  }, [targetDate]);
+  }, [targetYear, targetMonthIndex]);
 
   const monthlyIncome = metrics?.monthly_income || 0;
   const monthlyExpense = metrics?.monthly_expense || 0;
@@ -188,7 +195,7 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
   // ─────────────────────────────────────────────
   if (loadingMetrics) {
     return (
-      <div className="fixed inset-0 z-50 bg-[#F8F9FA] flex flex-col items-center justify-center p-6 text-[#99969E] animate-fade-in">
+      <div className="absolute inset-0 z-50 bg-[#F8F9FA] flex flex-col items-center justify-center p-6 text-[#99969E] animate-fade-in">
         <SpinnerIcon className="w-8 h-8 animate-spin mb-3 text-[#5F33E1]" />
         <p className="text-xs font-semibold">Calculating live finances for closure...</p>
       </div>
@@ -200,7 +207,7 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
   // ─────────────────────────────────────────────
   if (isLossMonth) {
     return (
-      <div className="fixed inset-0 z-50 bg-[#F8F9FA] flex flex-col animate-fade-in">
+      <div className="absolute inset-0 z-50 bg-[#F8F9FA] flex flex-col animate-fade-in">
         {/* Header */}
         <header className="bg-white px-5 py-4 border-b border-[#F2F0F5] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
@@ -291,7 +298,7 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
   // PROFIT MONTH VIEW (Dual-Mode Allocation Engine)
   // ─────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 z-50 bg-[#F8F9FA] flex flex-col animate-fade-in">
+    <div className="absolute inset-0 z-50 bg-[#F8F9FA] flex flex-col animate-fade-in">
       {/* 1. Header */}
       <header className="bg-white px-5 py-4 border-b border-[#F2F0F5] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">

@@ -23,6 +23,7 @@ interface TransactionItem {
 
 interface HomeTabProps {
   onNavigateToDeliveries?: () => void;
+  onOpenMonthEnd?: () => void;
   transactions?: TransactionItem[];
 }
 
@@ -36,6 +37,7 @@ const DEFAULT_RECENT: TransactionItem[] = [
 
 export default function HomeTab({
   onNavigateToDeliveries,
+  onOpenMonthEnd,
   transactions = DEFAULT_RECENT,
 }: HomeTabProps) {
   const [metrics, setMetrics] = useState<FinancialMetrics | null>(null);
@@ -45,8 +47,11 @@ export default function HomeTab({
     const fetchMetrics = async () => {
       try {
         const now = new Date();
-        const startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
-        const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
+        const y = now.getFullYear();
+        const m = now.getMonth();
+        const startDate = `${y}-${String(m + 1).padStart(2, "0")}-01`;
+        const lastDay = new Date(y, m + 1, 0).getDate();
+        const endDate = `${y}-${String(m + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
         const data = await getFinancialMetrics(startDate, endDate);
         setMetrics(data);
@@ -104,9 +109,19 @@ export default function HomeTab({
 
       {/* 2. Monthly P&L Card */}
       <div className="bg-white border border-[#F2F0F5] rounded-3xl p-5 shadow-xs">
-        <h2 className="text-[#120D26] font-extrabold mb-4 flex items-center gap-2 text-sm">
-          <TrendUpIcon className="w-4 h-4 text-[#5F33E1]" /> This Month's P&L
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-[#120D26] font-extrabold flex items-center gap-2 text-sm">
+            <TrendUpIcon className="w-4 h-4 text-[#5F33E1]" /> This Month's P&L
+          </h2>
+          {onOpenMonthEnd && (
+            <button
+              onClick={onOpenMonthEnd}
+              className="text-[11px] font-bold text-[#5F33E1] hover:underline flex items-center gap-1 active:scale-95 transition-transform"
+            >
+              Allocate Profit →
+            </button>
+          )}
+        </div>
         <div className="space-y-3.5">
           <div className="flex justify-between items-center text-xs">
             <span className="text-[#99969E] font-semibold">Total Income</span>
@@ -116,8 +131,19 @@ export default function HomeTab({
             <span className="text-[#99969E] font-semibold">Total Expenses</span>
             <span className="font-extrabold text-[#120D26] text-sm">{formatINR(monthlyExpense)}</span>
           </div>
-          <div className="border-t border-[#F2F0F5] pt-3 flex justify-between items-center">
-            <span className="text-[#120D26] font-bold text-xs">Net Profit</span>
+          <div
+            onClick={onOpenMonthEnd}
+            className={`border-t border-[#F2F0F5] pt-3 flex justify-between items-center ${onOpenMonthEnd ? "cursor-pointer hover:bg-gray-50/60 -mx-2 px-2 rounded-xl transition-colors" : ""}`}
+            title="Click to allocate profit"
+          >
+            <div className="flex items-center gap-1.5">
+              <span className="text-[#120D26] font-bold text-xs">Net Profit</span>
+              {onOpenMonthEnd && (
+                <span className="text-[10px] bg-[#EDE8FB] text-[#5F33E1] font-bold px-1.5 py-0.5 rounded-md">
+                  Allocate
+                </span>
+              )}
+            </div>
             <span className="font-black text-[#120D26] text-sm">
               {formatINR(netProfit)}
             </span>

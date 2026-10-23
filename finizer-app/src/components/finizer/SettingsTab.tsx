@@ -33,6 +33,7 @@ import type { Transaction } from "@/types";
 
 interface SettingsTabProps {
   onOpenActivityLog: () => void;
+  onOpenMonthEnd?: () => void;
 }
 
 const FALLBACK_TRANSACTIONS: Transaction[] = [
@@ -70,7 +71,7 @@ const FALLBACK_TRANSACTIONS: Transaction[] = [
   },
 ];
 
-export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
+export default function SettingsTab({ onOpenActivityLog, onOpenMonthEnd }: SettingsTabProps) {
   const { actor, setActor, availableActors } = useActor();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showAllocator, setShowAllocator] = useState<boolean>(false);
@@ -229,7 +230,7 @@ export default function SettingsTab({ onOpenActivityLog }: SettingsTabProps) {
 
         {/* Month-End Profit Allocator */}
         <button
-          onClick={() => setShowAllocator(true)}
+          onClick={() => (onOpenMonthEnd ? onOpenMonthEnd() : setShowAllocator(true))}
           className="w-full bg-white rounded-2xl p-4 flex items-center justify-between border border-[#F2F0F5] hover:border-gray-300 transition-all text-left shadow-xs group"
         >
           <div className="flex items-center gap-3.5">

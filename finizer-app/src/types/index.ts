@@ -51,6 +51,13 @@ export interface PurchaseOrder {
   created_by?: string;
   created_at: string;
   updated_at?: string;
+  // Diary-style fields (delivery redesign)
+  vendor_mobile?: string | null;
+  vendor_location?: string | null;
+  purchase_details?: string | null;
+  payment_account_id?: string | null;
+  arrival_date?: string | null;
+  transport_charges?: number;
 }
 
 export interface GoodsReceipt {
@@ -63,6 +70,7 @@ export interface GoodsReceipt {
   receipt_url?: string | null;
   notes?: string | null;
   received_by?: string;
+  transport_charges?: number;
 }
 
 export interface AuditLog {
@@ -117,6 +125,26 @@ export interface CreatePurchaseOrderDTO {
   vendor_name: string;
   expected_amount: number;
   expected_date: string;
+}
+
+export interface CreateVendorOrderDTO {
+  vendor_name: string;
+  vendor_mobile?: string;
+  vendor_location?: string;
+  amount_paid: number;
+  payment_account_id: string;
+  purchase_details?: string;
+  expected_date?: string;
+}
+
+export interface LogParcelArrivalDTO {
+  order_id: string;
+  arrival_date: string;
+  transport_charges?: number;
+  transport_account_id?: string;
+  notes?: string;
+  receipt_image_url?: string;
+  is_last_parcel: boolean;
 }
 
 export interface LogGoodsReceiptDTO {

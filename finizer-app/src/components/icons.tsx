@@ -310,6 +310,40 @@ export const ChevronRightIcon: React.FC<{ className?: string }> = ({ className }
   </svg>
 );
 
+/** Phone — vendor contact tap-to-call */
+export const PhoneIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M21.97 18.33c0 .36-.08.73-.25 1.09-.17.36-.39.7-.68 1.02-.49.54-1.03.93-1.64 1.18-.6.25-1.25.38-1.95.38-1.02 0-2.11-.24-3.26-.73s-2.3-1.15-3.44-1.98a28.75 28.75 0 01-3.28-2.8 28.414 28.414 0 01-2.79-3.27c-.82-1.14-1.48-2.28-1.96-3.41C2.24 8.67 2 7.58 2 6.54c0-.68.12-1.33.36-1.93.24-.61.62-1.17 1.15-1.67C4.15 2.31 4.85 2 5.59 2c.28 0 .56.06.81.18.26.12.49.3.67.56l2.32 3.27c.18.25.31.48.4.7.09.21.14.42.14.61 0 .24-.07.48-.21.71-.13.23-.32.47-.56.71l-.76.79c-.11.11-.16.24-.16.4 0 .08.01.15.04.23.03.08.07.14.09.2.18.33.49.76.93 1.28.45.52.93 1.05 1.45 1.58.54.53 1.06 1.02 1.59 1.47.52.44.95.74 1.29.92.05.02.11.05.18.08.08.03.16.04.25.04.17 0 .3-.06.41-.17l.76-.75c.25-.25.49-.44.72-.56.23-.14.46-.21.71-.21.19 0 .4.04.61.13.22.09.45.22.7.39l3.31 2.35c.26.18.44.39.55.64.1.25.16.5.16.78z" />
+  </svg>
+);
+
+/** Map Pin — vendor location */
+export const MapPinIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M20.62 8.45c-1.05-4.62-5.08-6.7-8.62-6.7h-.01c-3.53 0-7.57 2.07-8.62 6.69-1.17 5.16 1.99 9.53 4.85 12.28a5.436 5.436 0 003.78 1.53c1.36 0 2.72-.51 3.77-1.53 2.86-2.75 6.02-7.11 4.85-12.27zM12 13.46a3.15 3.15 0 110-6.3 3.15 3.15 0 010 6.3z" />
+  </svg>
+);
+
+/** Banknote — cash drawer money out */
+export const BanknoteIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="2" y="6" width="20" height="12" rx="2" />
+    <circle cx="12" cy="12" r="2" />
+    <path d="M6 12h.01M18 12h.01" />
+  </svg>
+);
+
+/** Package Check — mark arrival */
+export const PackageCheckIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M16 16l2 2 4-4" />
+    <path d="M21 10V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l2-1.14" />
+    <path d="M16.5 9.4L7.55 4.24" />
+    <polyline points="3.29 7 12 12 20.71 7" />
+    <line x1="12" y1="22" x2="12" y2="12" />
+  </svg>
+);
+
 /** Spinner / Loader — asynchronous submission states */
 export const SpinnerIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={`animate-spin ${className || "w-5 h-5"}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

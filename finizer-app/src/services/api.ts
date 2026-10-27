@@ -7,9 +7,12 @@ import type {
   PurchaseOrder,
   AuditLog,
   MonthlyClosure,
+  GoodsReceipt,
   CreateTransactionDTO,
   CreatePurchaseOrderDTO,
+  CreateVendorOrderDTO,
   LogGoodsReceiptDTO,
+  LogParcelArrivalDTO,
   CloseMonthDTO,
 } from '@/types';
 
@@ -116,7 +119,6 @@ export const api = {
     const { data, error } = await supabase
       .from('purchase_orders')
       .select('*')
-      .order('expected_delivery_date', { ascending: true })
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -156,6 +158,61 @@ export const api = {
       throw error;
     }
     return data;
+  },
+
+  // --- MONTH-END FINANCIAL CLOSURE ---
+
+  // --- VENDOR ORDERS (Delivery Redesign) ---
+  async createVendorOrder(dto: CreateVendorOrderDTO, actor: string): Promise<PurchaseOrder> {
+    const { data, error } = await supabase.rpc('create_vendor_order', {
+      p_vendor_name: dto.vendor_name,
+      p_vendor_mobile: dto.vendor_mobile || null,
+      p_vendor_location: dto.vendor_location || null,
+      p_amount_paid: dto.amount_paid,
+      p_payment_account_id: dto.payment_account_id,
+      p_purchase_details: dto.purchase_details || null,
+      p_expected_date: dto.expected_date || null,
+      p_actor: actor,
+    });
+
+    if (error) {
+      console.error('Failed to create vendor order:', error);
+      throw error;
+    }
+    return data as PurchaseOrder;
+  },
+
+  async logParcelArrival(dto: LogParcelArrivalDTO, actor: string): Promise<{ success: boolean; new_status: string; transport_recorded: boolean }> {
+    const { data, error } = await supabase.rpc('log_parcel_arrival', {
+      p_order_id: dto.order_id,
+      p_arrival_date: dto.arrival_date,
+      p_transport_charges: dto.transport_charges || 0,
+      p_transport_account_id: dto.transport_account_id || null,
+      p_notes: dto.notes || null,
+      p_receipt_image_url: dto.receipt_image_url || null,
+      p_is_last_parcel: dto.is_last_parcel,
+      p_actor: actor,
+    });
+
+    if (error) {
+      console.error('Failed to log parcel arrival:', error);
+      throw error;
+    }
+    return data;
+  },
+
+  async getOrderArrivals(orderId: string): Promise<GoodsReceipt[]> {
+    const { data, error } = await supabase
+      .from('goods_receipts')
+      .select('*')
+      .eq('purchase_order_id', orderId)
+      .order('received_date', { ascending: true });
+
+    if (error) {
+      console.error('Failed to fetch order arrivals:', error);
+      throw error;
+    }
+    return data || [];
   },
 
   // --- MONTH-END FINANCIAL CLOSURE ---

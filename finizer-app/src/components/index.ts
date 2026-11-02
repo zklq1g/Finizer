@@ -1,8 +1,8 @@
 // Sheets & Modals
 export { default as QuickAddSheet } from "./sheets/QuickAddSheet";
 export type { TransactionData } from "./sheets/QuickAddSheet";
-export { default as LogReceiptSheet } from "./sheets/LogReceiptSheet";
-export type { LogReceiptData } from "./sheets/LogReceiptSheet";
+export { default as LogArrivalSheet } from "./sheets/LogArrivalSheet";
+export { default as PayBalanceSheet } from "./sheets/PayBalanceSheet";
 export { default as NewOrderSheet } from "./sheets/NewOrderSheet";
 export { default as AccountSheet } from "./sheets/AccountSheet";
 export { default as CategorySheet } from "./sheets/CategorySheet";

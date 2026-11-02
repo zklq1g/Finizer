@@ -13,6 +13,7 @@ import type {
   CreateVendorOrderDTO,
   LogGoodsReceiptDTO,
   LogParcelArrivalDTO,
+  PayVendorBalanceDTO,
   CloseMonthDTO,
 } from '@/types';
 
@@ -173,6 +174,7 @@ export const api = {
       p_purchase_details: dto.purchase_details || null,
       p_expected_date: dto.expected_date || null,
       p_actor: actor,
+      p_total_order_amount: dto.total_order_amount,
     });
 
     if (error) {
@@ -180,6 +182,22 @@ export const api = {
       throw error;
     }
     return data as PurchaseOrder;
+  },
+
+  async payVendorBalance(dto: PayVendorBalanceDTO, actor: string): Promise<{ success: boolean; new_amount_paid: number; remaining: number; fully_paid: boolean }> {
+    const { data, error } = await supabase.rpc('pay_vendor_balance', {
+      p_order_id: dto.order_id,
+      p_payment_amount: dto.payment_amount,
+      p_payment_account_id: dto.payment_account_id,
+      p_actor: actor,
+      p_notes: dto.notes || null,
+    });
+
+    if (error) {
+      console.error('Failed to pay vendor balance:', error);
+      throw error;
+    }
+    return data;
   },
 
   async logParcelArrival(dto: LogParcelArrivalDTO, actor: string): Promise<{ success: boolean; new_status: string; transport_recorded: boolean }> {

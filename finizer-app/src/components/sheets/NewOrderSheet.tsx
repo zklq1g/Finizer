@@ -29,7 +29,7 @@ export default function NewOrderSheet({ isOpen, onClose, onSuccess }: NewOrderSh
   const [vendorName, setVendorName] = useState("");
   const [vendorMobile, setVendorMobile] = useState("");
   const [vendorLocation, setVendorLocation] = useState("");
-  const [amountPaid, setAmountPaid] = useState("");
+  const [totalAmount, setTotalAmount] = useState("");
   const [purchaseDetails, setPurchaseDetails] = useState("");
   const [expectedDate, setExpectedDate] = useState("");
   const [accounts, setAccounts] = useState<AccountItem[]>(DEFAULT_ACCOUNTS);
@@ -37,9 +37,13 @@ export default function NewOrderSheet({ isOpen, onClose, onSuccess }: NewOrderSh
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Payment split state
+  const [paymentMode, setPaymentMode] = useState<"full" | "advance">("full");
+  const [advanceAmount, setAdvanceAmount] = useState("");
+
   const vendorInputRef = useRef<HTMLInputElement>(null);
 
-  // Load accounts + set defaults when sheet opens
+  // Load accounts + reset form when sheet opens
   useEffect(() => {
     if (isOpen) {
       const target = new Date();
@@ -48,8 +52,10 @@ export default function NewOrderSheet({ isOpen, onClose, onSuccess }: NewOrderSh
       setVendorName("");
       setVendorMobile("");
       setVendorLocation("");
-      setAmountPaid("");
+      setTotalAmount("");
+      setAdvanceAmount("");
       setPurchaseDetails("");
+      setPaymentMode("full");
       setErrorMessage(null);
 
       const timer = setTimeout(() => vendorInputRef.current?.focus(), 100);
@@ -85,13 +91,16 @@ export default function NewOrderSheet({ isOpen, onClose, onSuccess }: NewOrderSh
 
   if (!isOpen) return null;
 
-  const parsedAmount = parseFloat(amountPaid) || 0;
+  const parsedTotal = parseFloat(totalAmount) || 0;
+  const parsedAdvance = parseFloat(advanceAmount) || 0;
+  const effectivePayment = paymentMode === "full" ? parsedTotal : parsedAdvance;
+  const remainingDue = paymentMode === "advance" ? Math.max(0, parsedTotal - parsedAdvance) : 0;
   const selectedAccount = accounts.find((a) => a.id === accountId) || accounts[0];
 
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAmountChange = (setter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     if (val === "" || /^\d*\.?\d{0,2}$/.test(val)) {
-      setAmountPaid(val);
+      setter(val);
     }
   };
 
@@ -100,8 +109,10 @@ export default function NewOrderSheet({ isOpen, onClose, onSuccess }: NewOrderSh
     setErrorMessage(null);
 
     if (!vendorName.trim()) { setErrorMessage("Please enter vendor name"); return; }
-    if (parsedAmount <= 0) { setErrorMessage("Please enter a valid amount"); return; }
-    if (!accountId) { setErrorMessage("Please select a payment account"); return; }
+    if (parsedTotal <= 0) { setErrorMessage("Please enter the total order amount"); return; }
+    if (paymentMode === "advance" && parsedAdvance <= 0) { setErrorMessage("Please enter the advance amount"); return; }
+    if (paymentMode === "advance" && parsedAdvance > parsedTotal) { setErrorMessage("Advance cannot exceed total order amount"); return; }
+    if (effectivePayment > 0 && !accountId) { setErrorMessage("Please select a payment account"); return; }
 
     try {
       setIsSubmitting(true);
@@ -110,7 +121,8 @@ export default function NewOrderSheet({ isOpen, onClose, onSuccess }: NewOrderSh
           vendor_name: vendorName.trim(),
           vendor_mobile: vendorMobile.trim() || undefined,
           vendor_location: vendorLocation.trim() || undefined,
-          amount_paid: parsedAmount,
+          total_order_amount: parsedTotal,
+          amount_paid: effectivePayment,
           payment_account_id: accountId,
           purchase_details: purchaseDetails.trim() || undefined,
           expected_date: expectedDate || undefined,
@@ -170,7 +182,7 @@ export default function NewOrderSheet({ isOpen, onClose, onSuccess }: NewOrderSh
             <input
               ref={vendorInputRef}
               type="text"
-              placeholder="e.g., RK Wholesalers"
+              placeholder="e.g., Shree Ganesh Textiles"
               value={vendorName}
               onChange={(e) => setVendorName(e.target.value)}
               disabled={isSubmitting}
@@ -209,23 +221,80 @@ export default function NewOrderSheet({ isOpen, onClose, onSuccess }: NewOrderSh
             </div>
           </div>
 
-          {/* Amount Paid */}
+          {/* Total Order Amount */}
           <div className="bg-[#F8F9FA] rounded-2xl p-4 border border-[#F2F0F5] focus-within:border-[#5F33E1] transition-all">
-            <label className="block text-[11px] font-bold text-[#99969E] uppercase tracking-wider mb-1">Amount Paid to Vendor *</label>
+            <label className="block text-[11px] font-bold text-[#99969E] uppercase tracking-wider mb-1">Total Order Amount (Full Bill) *</label>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-extrabold text-[#120D26] select-none">₹</span>
               <input
                 type="text"
                 inputMode="decimal"
                 pattern="[0-9]*[.]?[0-9]*"
-                placeholder="0.00"
-                value={amountPaid}
-                onChange={handleAmountChange}
+                placeholder="0"
+                value={totalAmount}
+                onChange={handleAmountChange(setTotalAmount)}
                 disabled={isSubmitting}
                 className="w-full text-4xl sm:text-5xl font-black bg-transparent outline-none tracking-tight text-[#120D26]"
               />
             </div>
           </div>
+
+          {/* Payment Mode Toggle */}
+          <div className="space-y-2.5">
+            <label className="block text-xs font-bold text-[#120D26]">How are you paying? *</label>
+            <div className="flex bg-[#F5F2FF] p-1 rounded-full border border-[#EDE8FB]">
+              <button
+                type="button"
+                onClick={() => setPaymentMode("full")}
+                disabled={isSubmitting}
+                className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${
+                  paymentMode === "full"
+                    ? "bg-[#5F33E1] text-white shadow-sm"
+                    : "text-[#99969E] hover:text-[#120D26]"
+                }`}
+              >
+                💯 Paying 100% Now
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMode("advance")}
+                disabled={isSubmitting}
+                className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${
+                  paymentMode === "advance"
+                    ? "bg-[#D97706] text-white shadow-sm"
+                    : "text-[#99969E] hover:text-[#120D26]"
+                }`}
+              >
+                ⏳ Paying Advance
+              </button>
+            </div>
+          </div>
+
+          {/* Advance Amount (only if advance mode) */}
+          {paymentMode === "advance" && (
+            <div className="bg-[#FEF3C7] rounded-2xl p-4 border border-[#FDE68A] focus-within:border-[#D97706] transition-all">
+              <label className="block text-[11px] font-bold text-[#92400E] uppercase tracking-wider mb-1">Advance Paying Today *</label>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-extrabold text-[#92400E] select-none">₹</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]*[.]?[0-9]*"
+                  placeholder="0"
+                  value={advanceAmount}
+                  onChange={handleAmountChange(setAdvanceAmount)}
+                  disabled={isSubmitting}
+                  autoFocus
+                  className="w-full text-3xl font-black bg-transparent outline-none tracking-tight text-[#92400E]"
+                />
+              </div>
+              {parsedTotal > 0 && parsedAdvance > 0 && parsedAdvance <= parsedTotal && (
+                <p className="text-[11px] text-[#B45309] mt-2 font-medium">
+                  Remaining <strong className="text-[#92400E]">{formatINR(remainingDue)}</strong> due to vendor within the week
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Paid From Account */}
           <div className="space-y-2">
@@ -259,7 +328,7 @@ export default function NewOrderSheet({ isOpen, onClose, onSuccess }: NewOrderSh
             <label className="block text-xs font-semibold text-[#120D26] mb-1.5">What was ordered? (Optional)</label>
             <input
               type="text"
-              placeholder="e.g., Almonds 120kg, Cashews 85kg"
+              placeholder="e.g., Cotton Kurtis 120 pcs, Rayon tops 50 pcs"
               value={purchaseDetails}
               onChange={(e) => setPurchaseDetails(e.target.value)}
               disabled={isSubmitting}
@@ -291,9 +360,20 @@ export default function NewOrderSheet({ isOpen, onClose, onSuccess }: NewOrderSh
           </div>
 
           {/* Auto-expense notice */}
-          {parsedAmount > 0 && (
-            <div className="p-3 bg-[#EDE8FB]/60 border border-[#5F33E1]/20 rounded-2xl text-xs text-[#524E59]">
-              ⚡ This will auto-record an expense of <strong className="text-[#5F33E1]">{formatINR(parsedAmount)}</strong> from <strong>{selectedAccount?.name}</strong>
+          {effectivePayment > 0 && (
+            <div className={`p-3 rounded-2xl text-xs ${
+              paymentMode === "advance"
+                ? "bg-[#FEF3C7]/60 border border-[#D97706]/20 text-[#92400E]"
+                : "bg-[#EDE8FB]/60 border border-[#5F33E1]/20 text-[#524E59]"
+            }`}>
+              ⚡ This will auto-record an expense of{" "}
+              <strong className={paymentMode === "advance" ? "text-[#D97706]" : "text-[#5F33E1]"}>
+                {formatINR(effectivePayment)}
+              </strong>{" "}
+              from <strong>{selectedAccount?.name}</strong>
+              {paymentMode === "advance" && remainingDue > 0 && (
+                <span> · <strong className="text-[#92400E]">{formatINR(remainingDue)}</strong> still due to vendor</span>
+              )}
             </div>
           )}
         </form>
@@ -303,11 +383,17 @@ export default function NewOrderSheet({ isOpen, onClose, onSuccess }: NewOrderSh
           <button
             type="submit"
             onClick={handleSubmit}
-            disabled={isSubmitting || !vendorName.trim() || parsedAmount <= 0}
-            className="w-full py-4 rounded-2xl text-base font-extrabold text-white bg-[#5F33E1] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all shadow-lg shadow-[#5F33E1]/25 hover:bg-[#5029C9] flex items-center justify-center gap-2"
+            disabled={isSubmitting || !vendorName.trim() || parsedTotal <= 0 || (paymentMode === "advance" && parsedAdvance <= 0)}
+            className={`w-full py-4 rounded-2xl text-base font-extrabold text-white disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2 ${
+              paymentMode === "advance"
+                ? "bg-[#D97706] shadow-[#D97706]/25 hover:bg-[#B45309]"
+                : "bg-[#5F33E1] shadow-[#5F33E1]/25 hover:bg-[#5029C9]"
+            }`}
           >
             {isSubmitting ? (
               <><SpinnerIcon className="w-5 h-5 animate-spin" /><span>Creating Order...</span></>
+            ) : paymentMode === "advance" ? (
+              <><CheckIcon className="w-5 h-5" /><span>Create Order & Log Advance</span></>
             ) : (
               <><CheckIcon className="w-5 h-5" /><span>Create Order & Log Payment</span></>
             )}

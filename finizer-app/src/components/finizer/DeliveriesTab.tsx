@@ -9,10 +9,12 @@ import {
   PhoneIcon,
   MapPinIcon,
   PackageCheckIcon,
+  BanknoteIcon,
 } from "../icons";
 import { formatINR, calculateDeliveryAging } from "../../utils/format";
 import LogArrivalSheet, { type LogArrivalData } from "../sheets/LogArrivalSheet";
 import NewOrderSheet from "../sheets/NewOrderSheet";
+import PayBalanceSheet, { type PayBalanceResult } from "../sheets/PayBalanceSheet";
 import { api } from "@/services/api";
 import { useActor } from "@/context/ActorContext";
 
@@ -23,6 +25,7 @@ interface VendorOrder {
   vendorLocation?: string | null;
   orderDate: string;
   expectedDeliveryDate?: string;
+  totalOrderAmount: number;
   amountPaid: number;
   transportCharges: number;
   purchaseDetails?: string | null;
@@ -39,13 +42,14 @@ const getRelativeDate = (offsetDays: number): string => {
 const SAMPLE_ORDERS: VendorOrder[] = [
   {
     id: "po-1",
-    vendorName: "RK Dryfruit Wholesalers",
+    vendorName: "Shree Ganesh Textiles",
     vendorMobile: "+91 98765 43210",
-    vendorLocation: "Khari Baoli, Delhi",
+    vendorLocation: "Surat, Gujarat",
     orderDate: "15 Oct 2026",
+    totalOrderAmount: 320000,
     amountPaid: 320000,
     transportCharges: 3500,
-    purchaseDetails: "Almonds 120kg, Cashews 85kg, Walnuts 50kg",
+    purchaseDetails: "Cotton Kurtis 120 pcs, Rayon tops 50 pcs",
     arrivalDate: getRelativeDate(-5),
     status: "COMPLETE",
   },
@@ -56,7 +60,8 @@ const SAMPLE_ORDERS: VendorOrder[] = [
     vendorLocation: "Bhiwandi, Maharashtra",
     orderDate: "18 Oct 2026",
     expectedDeliveryDate: getRelativeDate(-2),
-    amountPaid: 185000,
+    totalOrderAmount: 185000,
+    amountPaid: 100000,
     transportCharges: 2200,
     purchaseDetails: "FMCG batch — soaps, shampoo, detergent",
     status: "PARTIAL",
@@ -67,6 +72,7 @@ const SAMPLE_ORDERS: VendorOrder[] = [
     vendorLocation: "Surat, Gujarat",
     orderDate: "22 Oct 2026",
     expectedDeliveryDate: getRelativeDate(3),
+    totalOrderAmount: 42000,
     amountPaid: 42000,
     transportCharges: 0,
     status: "PENDING",
@@ -86,11 +92,12 @@ const formatDate = (dateStr?: string | null): string => {
 
 export default function DeliveriesTab() {
   const { actor } = useActor();
-  const [activeFilter, setActiveFilter] = useState<"Waiting" | "Arrived">("Waiting");
+  const [activeFilter, setActiveFilter] = useState<"Waiting" | "Due" | "Arrived">("Waiting");
   const [orders, setOrders] = useState<VendorOrder[]>(SAMPLE_ORDERS);
   const [selectedOrder, setSelectedOrder] = useState<VendorOrder | null>(null);
   const [isArrivalSheetOpen, setIsArrivalSheetOpen] = useState(false);
   const [isNewOrderSheetOpen, setIsNewOrderSheetOpen] = useState(false);
+  const [isPayBalanceOpen, setIsPayBalanceOpen] = useState(false);
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -109,7 +116,8 @@ export default function DeliveriesTab() {
           vendorLocation: o.vendor_location,
           orderDate: formatDate(o.created_at),
           expectedDeliveryDate: o.expected_delivery_date,
-          amountPaid: Number(o.total_expected_amount),
+          totalOrderAmount: Number(o.total_order_amount || o.total_expected_amount),
+          amountPaid: Number(o.amount_paid ?? o.total_expected_amount),
           transportCharges: Number(o.transport_charges || 0),
           purchaseDetails: o.purchase_details,
           arrivalDate: o.arrival_date,
@@ -129,6 +137,11 @@ export default function DeliveriesTab() {
   const handleOpenArrivalSheet = (order: VendorOrder) => {
     setSelectedOrder(order);
     setIsArrivalSheetOpen(true);
+  };
+
+  const handleOpenPayBalance = (order: VendorOrder) => {
+    setSelectedOrder(order);
+    setIsPayBalanceOpen(true);
   };
 
   const handleSaveArrival = async (data: LogArrivalData) => {
@@ -170,8 +183,34 @@ export default function DeliveriesTab() {
     );
   };
 
+  const handlePayBalanceSuccess = (result: PayBalanceResult) => {
+    // Optimistic local update
+    setOrders((prev) =>
+      prev.map((order) => {
+        if (order.id !== result.orderId) return order;
+        return {
+          ...order,
+          amountPaid: order.amountPaid + result.amountPaid,
+        };
+      })
+    );
+
+    loadOrders();
+    showToast(
+      result.fullyPaid
+        ? `✅ Vendor fully paid! ₹${result.amountPaid.toLocaleString("en-IN")} recorded.`
+        : `Payment of ₹${result.amountPaid.toLocaleString("en-IN")} recorded. ₹${result.remaining.toLocaleString("en-IN")} still due.`
+    );
+  };
+
+  // Filter counts
+  const waitingCount = orders.filter((o) => o.status !== "COMPLETE").length;
+  const dueCount = orders.filter((o) => o.amountPaid < o.totalOrderAmount).length;
+  const arrivedCount = orders.filter((o) => o.status === "COMPLETE").length;
+
   const filteredOrders = orders.filter((o) => {
     if (activeFilter === "Waiting") return o.status === "PENDING" || o.status === "PARTIAL";
+    if (activeFilter === "Due") return o.amountPaid < o.totalOrderAmount;
     return o.status === "COMPLETE";
   });
 
@@ -198,7 +237,7 @@ export default function DeliveriesTab() {
         </div>
       )}
 
-      {/* Filters */}
+      {/* 3-Way Filters */}
       <div className="flex bg-[#F5F2FF] p-1 rounded-full border border-[#EDE8FB]">
         <button
           onClick={() => setActiveFilter("Waiting")}
@@ -208,7 +247,17 @@ export default function DeliveriesTab() {
               : "text-[#99969E] hover:text-[#120D26]"
           }`}
         >
-          Waiting ({orders.filter((o) => o.status !== "COMPLETE").length})
+          🚚 In Transit ({waitingCount})
+        </button>
+        <button
+          onClick={() => setActiveFilter("Due")}
+          className={`flex-1 py-1.5 rounded-full text-xs font-bold transition-all ${
+            activeFilter === "Due"
+              ? "bg-[#D97706] text-white shadow-sm"
+              : "text-[#99969E] hover:text-[#D97706]"
+          }`}
+        >
+          ₹ Due ({dueCount})
         </button>
         <button
           onClick={() => setActiveFilter("Arrived")}
@@ -218,7 +267,7 @@ export default function DeliveriesTab() {
               : "text-[#99969E] hover:text-[#5F33E1]"
           }`}
         >
-          Arrived ({orders.filter((o) => o.status === "COMPLETE").length})
+          ✅ Done ({arrivedCount})
         </button>
       </div>
 
@@ -227,12 +276,18 @@ export default function DeliveriesTab() {
         <div className="bg-white rounded-3xl p-8 text-center border border-[#F2F0F5]">
           <TruckIcon className="w-8 h-8 text-[#5F33E1] mx-auto mb-3" />
           <p className="text-sm font-bold text-[#120D26]">
-            {activeFilter === "Waiting" ? "No orders waiting" : "No arrived orders yet"}
+            {activeFilter === "Waiting"
+              ? "No orders in transit"
+              : activeFilter === "Due"
+              ? "No pending payments"
+              : "No completed orders yet"}
           </p>
           <p className="text-xs text-[#99969E] mt-1">
             {activeFilter === "Waiting"
               ? "Tap + New Order to record a vendor purchase"
-              : "Orders will appear here once parcels arrive"}
+              : activeFilter === "Due"
+              ? "All vendors are fully paid!"
+              : "Orders will appear here once fully arrived"}
           </p>
         </div>
       ) : (
@@ -241,34 +296,49 @@ export default function DeliveriesTab() {
             const isComplete = order.status === "COMPLETE";
             const isPartial = order.status === "PARTIAL";
             const aging = calculateDeliveryAging(order.expectedDeliveryDate);
+            const isFullyPaid = order.amountPaid >= order.totalOrderAmount;
+            const vendorDue = order.totalOrderAmount - order.amountPaid;
 
             return (
               <div
                 key={order.id}
                 className="bg-white rounded-3xl p-4 border border-[#F2F0F5] shadow-sm hover:border-[#EDE8FB] transition-colors"
               >
-                {/* Row 1: Vendor Name + Status */}
+                {/* Row 1: Vendor Name + Status Badges */}
                 <div className="flex items-start justify-between gap-2 mb-2.5">
                   <h3 className="font-bold text-[#120D26] text-sm truncate min-w-0">
                     {order.vendorName}
                   </h3>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 flex items-center gap-1 ${
-                      isComplete
-                        ? "bg-[#DCFCE7] text-[#16A34A]"
-                        : isPartial
-                        ? "bg-[#FEF3C7] text-[#D97706]"
-                        : "bg-[#EDE8FB] text-[#5F33E1]"
-                    }`}
-                  >
-                    {isComplete ? (
-                      <><CheckIcon className="w-3 h-3" /><span>Arrived</span></>
-                    ) : isPartial ? (
-                      <><TimeCircleIcon className="w-3 h-3" /><span>Partial</span></>
-                    ) : (
-                      <><TruckIcon className="w-3 h-3" /><span>Ordered</span></>
-                    )}
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {/* Payment Badge */}
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 ${
+                        isFullyPaid
+                          ? "bg-[#DCFCE7] text-[#16A34A]"
+                          : "bg-[#FEF3C7] text-[#D97706]"
+                      }`}
+                    >
+                      {isFullyPaid ? "💰 Paid" : `₹${Math.round(vendorDue / 1000)}k Due`}
+                    </span>
+                    {/* Delivery Badge */}
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 ${
+                        isComplete
+                          ? "bg-[#DCFCE7] text-[#16A34A]"
+                          : isPartial
+                          ? "bg-[#FEF3C7] text-[#D97706]"
+                          : "bg-[#EDE8FB] text-[#5F33E1]"
+                      }`}
+                    >
+                      {isComplete ? (
+                        <><CheckIcon className="w-3 h-3" /><span>Arrived</span></>
+                      ) : isPartial ? (
+                        <><TimeCircleIcon className="w-3 h-3" /><span>Batch In</span></>
+                      ) : (
+                        <><TruckIcon className="w-3 h-3" /><span>In Transit</span></>
+                      )}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Row 2: Location + Phone */}
@@ -310,11 +380,16 @@ export default function DeliveriesTab() {
                   </div>
                 )}
 
-                {/* Row 4: Amount + Transport */}
+                {/* Row 4: Amount + Payment Progress */}
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2.5 text-xs">
                   <span className="text-[#99969E]">
-                    Amount Paid: <strong className="text-[#120D26] font-extrabold">{formatINR(order.amountPaid)}</strong>
+                    Total Bill: <strong className="text-[#120D26] font-extrabold">{formatINR(order.totalOrderAmount)}</strong>
                   </span>
+                  {!isFullyPaid && (
+                    <span className="text-[#D97706] font-bold">
+                      Paid: {formatINR(order.amountPaid)} · Due: {formatINR(vendorDue)}
+                    </span>
+                  )}
                   {order.transportCharges > 0 && (
                     <span className="text-[#99969E]">
                       Transport: <strong className="text-[#120D26]">₹{order.transportCharges.toLocaleString("en-IN")}</strong>
@@ -330,16 +405,29 @@ export default function DeliveriesTab() {
                   </div>
                 )}
 
-                {/* Action: Log Arrival */}
-                {!isComplete && (
-                  <button
-                    onClick={() => handleOpenArrivalSheet(order)}
-                    className="w-full bg-[#EDE8FB] hover:bg-[#E1D7FA] text-[#5F33E1] font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-[0.99]"
-                  >
-                    <PackageCheckIcon className="w-4 h-4 text-[#5F33E1]" />
-                    <span>Log Arrival</span>
-                  </button>
-                )}
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  {/* Pay Balance button — show when vendor is not fully paid */}
+                  {!isFullyPaid && (
+                    <button
+                      onClick={() => handleOpenPayBalance(order)}
+                      className="flex-1 bg-[#FEF3C7] hover:bg-[#FDE68A] text-[#D97706] font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-[0.99]"
+                    >
+                      <BanknoteIcon className="w-4 h-4 text-[#D97706]" />
+                      <span>Pay ₹{Math.round(vendorDue / 1000)}k Balance</span>
+                    </button>
+                  )}
+                  {/* Log Arrival button — show when delivery not complete */}
+                  {!isComplete && (
+                    <button
+                      onClick={() => handleOpenArrivalSheet(order)}
+                      className="flex-1 bg-[#EDE8FB] hover:bg-[#E1D7FA] text-[#5F33E1] font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-[0.99]"
+                    >
+                      <PackageCheckIcon className="w-4 h-4 text-[#5F33E1]" />
+                      <span>Log Arrival</span>
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -353,13 +441,30 @@ export default function DeliveriesTab() {
             ? {
                 id: selectedOrder.id,
                 vendorName: selectedOrder.vendorName,
-                amountPaid: selectedOrder.amountPaid,
+                amountPaid: selectedOrder.totalOrderAmount,
               }
             : null
         }
         isOpen={isArrivalSheetOpen}
         onClose={() => setIsArrivalSheetOpen(false)}
         onSave={handleSaveArrival}
+      />
+
+      {/* Pay Balance Bottom Sheet */}
+      <PayBalanceSheet
+        order={
+          selectedOrder
+            ? {
+                id: selectedOrder.id,
+                vendorName: selectedOrder.vendorName,
+                totalAmount: selectedOrder.totalOrderAmount,
+                amountPaid: selectedOrder.amountPaid,
+              }
+            : null
+        }
+        isOpen={isPayBalanceOpen}
+        onClose={() => setIsPayBalanceOpen(false)}
+        onSuccess={handlePayBalanceSuccess}
       />
 
       {/* New Vendor Order Bottom Sheet */}

@@ -58,6 +58,9 @@ export interface PurchaseOrder {
   payment_account_id?: string | null;
   arrival_date?: string | null;
   transport_charges?: number;
+  // Payment split fields
+  total_order_amount?: number | null;
+  amount_paid?: number | null;
 }
 
 export interface GoodsReceipt {
@@ -131,10 +134,18 @@ export interface CreateVendorOrderDTO {
   vendor_name: string;
   vendor_mobile?: string;
   vendor_location?: string;
+  total_order_amount: number;
   amount_paid: number;
   payment_account_id: string;
   purchase_details?: string;
   expected_date?: string;
+}
+
+export interface PayVendorBalanceDTO {
+  order_id: string;
+  payment_amount: number;
+  payment_account_id: string;
+  notes?: string;
 }
 
 export interface LogParcelArrivalDTO {

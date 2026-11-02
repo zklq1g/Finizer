@@ -5,11 +5,11 @@ import {
   BoxIcon,
   CheckIcon,
   AlertTriangleIcon,
-  TimeCircleIcon,
   PhoneIcon,
   MapPinIcon,
   PackageCheckIcon,
   BanknoteIcon,
+  AddIcon,
 } from "../icons";
 import { formatINR, calculateDeliveryAging } from "../../utils/format";
 import LogArrivalSheet, { type LogArrivalData } from "../sheets/LogArrivalSheet";
@@ -162,7 +162,6 @@ export default function DeliveriesTab() {
       console.warn("Backend arrival log error:", err);
     }
 
-    // Optimistic local update
     setOrders((prev) =>
       prev.map((order) => {
         if (order.id !== data.orderId) return order;
@@ -178,13 +177,12 @@ export default function DeliveriesTab() {
     loadOrders();
     showToast(
       data.isLastParcel
-        ? `Order fully arrived! ${data.transportCharges > 0 ? `Transport ₹${data.transportCharges.toLocaleString("en-IN")} recorded.` : ""}`
-        : `Parcel arrival logged. ${data.transportCharges > 0 ? `Transport ₹${data.transportCharges.toLocaleString("en-IN")} recorded.` : ""}`
+        ? `Order marked as delivered. Transport ${data.transportCharges > 0 ? formatINR(data.transportCharges) : "₹0"} recorded.`
+        : `Partial parcel logged. Transport ${data.transportCharges > 0 ? formatINR(data.transportCharges) : "₹0"} recorded.`
     );
   };
 
   const handlePayBalanceSuccess = (result: PayBalanceResult) => {
-    // Optimistic local update
     setOrders((prev) =>
       prev.map((order) => {
         if (order.id !== result.orderId) return order;
@@ -198,8 +196,8 @@ export default function DeliveriesTab() {
     loadOrders();
     showToast(
       result.fullyPaid
-        ? `✅ Vendor fully paid! ₹${result.amountPaid.toLocaleString("en-IN")} recorded.`
-        : `Payment of ₹${result.amountPaid.toLocaleString("en-IN")} recorded. ₹${result.remaining.toLocaleString("en-IN")} still due.`
+        ? `Vendor balance cleared: ${formatINR(result.amountPaid)} recorded.`
+        : `Payment of ${formatINR(result.amountPaid)} recorded. Remaining due: ${formatINR(result.remaining)}.`
     );
   };
 
@@ -216,225 +214,246 @@ export default function DeliveriesTab() {
 
   return (
     <div className="flex flex-col gap-5 animate-fade-in">
-      {/* Header */}
+      {/* Top Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-[#120D26]">Deliveries</h1>
-          <p className="text-xs text-[#99969E] font-medium">Vendor Orders & Parcels</p>
+          <h1 className="text-xl font-bold tracking-tight text-[#120D26]">Deliveries</h1>
+          <p className="text-xs text-[#7B7882] font-medium">Vendor orders, payments & arrivals</p>
         </div>
         <button
           onClick={() => setIsNewOrderSheetOpen(true)}
-          className="bg-[#5F33E1] hover:bg-[#5029C9] text-white text-xs font-bold px-3 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1 active:scale-95"
+          className="bg-[#5F33E1] hover:bg-[#5029C9] text-white text-xs font-semibold px-3 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 active:scale-95"
         >
-          <span>+ New Order</span>
+          <AddIcon className="w-4 h-4 text-white" />
+          <span>New Order</span>
         </button>
       </div>
 
+      {/* Feedback Toast */}
       {feedbackToast && (
-        <div className="bg-[#DCFCE7] text-[#16A34A] text-xs font-bold p-3.5 rounded-2xl border border-[#BBF7D0] animate-fade-in flex items-center gap-2 shadow-sm">
-          <CheckIcon className="w-4 h-4 text-[#16A34A] shrink-0" />
+        <div className="bg-emerald-50 text-emerald-800 text-xs font-medium p-3 rounded-xl border border-emerald-200 animate-fade-in flex items-center gap-2 shadow-xs">
+          <CheckIcon className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{feedbackToast}</span>
         </div>
       )}
 
-      {/* 3-Way Filters */}
-      <div className="flex bg-[#F5F2FF] p-1 rounded-full border border-[#EDE8FB]">
+      {/* Segmented Filter Control */}
+      <div className="flex bg-[#F2F0F7] p-1 rounded-xl border border-[#E6E3ED] text-xs">
         <button
           onClick={() => setActiveFilter("Waiting")}
-          className={`flex-1 py-1.5 rounded-full text-xs font-bold transition-all ${
+          className={`flex-1 py-1.5 px-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 ${
             activeFilter === "Waiting"
-              ? "bg-[#120D26] text-white shadow-sm"
-              : "text-[#99969E] hover:text-[#120D26]"
+              ? "bg-white text-[#120D26] shadow-xs"
+              : "text-[#7B7882] hover:text-[#120D26]"
           }`}
         >
-          🚚 In Transit ({waitingCount})
+          <span>In Transit</span>
+          <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+            activeFilter === "Waiting" ? "bg-[#EDE8FB] text-[#5F33E1]" : "bg-[#E6E3ED] text-[#7B7882]"
+          }`}>
+            {waitingCount}
+          </span>
         </button>
         <button
           onClick={() => setActiveFilter("Due")}
-          className={`flex-1 py-1.5 rounded-full text-xs font-bold transition-all ${
+          className={`flex-1 py-1.5 px-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 ${
             activeFilter === "Due"
-              ? "bg-[#D97706] text-white shadow-sm"
-              : "text-[#99969E] hover:text-[#D97706]"
+              ? "bg-white text-[#120D26] shadow-xs"
+              : "text-[#7B7882] hover:text-[#120D26]"
           }`}
         >
-          ₹ Due ({dueCount})
+          <span>Payment Due</span>
+          {dueCount > 0 && (
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+              activeFilter === "Due" ? "bg-amber-100 text-amber-800" : "bg-[#E6E3ED] text-[#7B7882]"
+            }`}>
+              {dueCount}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveFilter("Arrived")}
-          className={`flex-1 py-1.5 rounded-full text-xs font-bold transition-all ${
+          className={`flex-1 py-1.5 px-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 ${
             activeFilter === "Arrived"
-              ? "bg-[#5F33E1] text-white shadow-sm"
-              : "text-[#99969E] hover:text-[#5F33E1]"
+              ? "bg-white text-[#120D26] shadow-xs"
+              : "text-[#7B7882] hover:text-[#120D26]"
           }`}
         >
-          ✅ Done ({arrivedCount})
+          <span>Delivered</span>
+          <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+            activeFilter === "Arrived" ? "bg-[#EDE8FB] text-[#5F33E1]" : "bg-[#E6E3ED] text-[#7B7882]"
+          }`}>
+            {arrivedCount}
+          </span>
         </button>
       </div>
 
-      {/* Order Cards */}
+      {/* Orders List */}
       {filteredOrders.length === 0 ? (
-        <div className="bg-white rounded-3xl p-8 text-center border border-[#F2F0F5]">
-          <TruckIcon className="w-8 h-8 text-[#5F33E1] mx-auto mb-3" />
-          <p className="text-sm font-bold text-[#120D26]">
+        <div className="bg-white rounded-2xl p-8 text-center border border-[#ECE9F1]">
+          <TruckIcon className="w-8 h-8 text-[#9E9BA5] mx-auto mb-2.5 opacity-60" />
+          <p className="text-sm font-semibold text-[#120D26]">
             {activeFilter === "Waiting"
-              ? "No orders in transit"
+              ? "No orders currently in transit"
               : activeFilter === "Due"
-              ? "No pending payments"
-              : "No completed orders yet"}
+              ? "All vendor balances are fully settled"
+              : "No delivered orders in this period"}
           </p>
-          <p className="text-xs text-[#99969E] mt-1">
+          <p className="text-xs text-[#7B7882] mt-1">
             {activeFilter === "Waiting"
-              ? "Tap + New Order to record a vendor purchase"
-              : activeFilter === "Due"
-              ? "All vendors are fully paid!"
-              : "Orders will appear here once fully arrived"}
+              ? "Use + New Order above to record a vendor purchase"
+              : "Orders will automatically appear here as status updates"}
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3.5">
           {filteredOrders.map((order) => {
             const isComplete = order.status === "COMPLETE";
             const isPartial = order.status === "PARTIAL";
             const aging = calculateDeliveryAging(order.expectedDeliveryDate);
             const isFullyPaid = order.amountPaid >= order.totalOrderAmount;
-            const vendorDue = order.totalOrderAmount - order.amountPaid;
+            const vendorDue = Math.max(0, order.totalOrderAmount - order.amountPaid);
 
             return (
               <div
                 key={order.id}
-                className="bg-white rounded-3xl p-4 border border-[#F2F0F5] shadow-sm hover:border-[#EDE8FB] transition-colors"
+                className="bg-white rounded-2xl p-4 border border-[#ECE9F1] shadow-xs hover:border-[#D8D4E2] transition-colors"
               >
-                {/* Row 1: Vendor Name + Status Badges */}
-                <div className="flex items-start justify-between gap-2 mb-2.5">
-                  <h3 className="font-bold text-[#120D26] text-sm truncate min-w-0">
-                    {order.vendorName}
-                  </h3>
+                {/* Header: Vendor Name + Status Indicators */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-[#120D26] text-sm tracking-tight truncate">
+                      {order.vendorName}
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[11px] text-[#7B7882]">
+                      {order.vendorLocation && (
+                        <span className="flex items-center gap-1">
+                          <MapPinIcon className="w-3 h-3 text-[#7B7882]" />
+                          <span>{order.vendorLocation}</span>
+                        </span>
+                      )}
+                      {order.vendorMobile && (
+                        <a
+                          href={`tel:${order.vendorMobile.replace(/\s/g, "")}`}
+                          className="flex items-center gap-1 text-[#5F33E1] hover:underline font-medium"
+                        >
+                          <PhoneIcon className="w-3 h-3" />
+                          <span>{order.vendorMobile}</span>
+                        </a>
+                      )}
+                      <span>Ordered {order.orderDate}</span>
+                    </div>
+                  </div>
+
+                  {/* Refined Status Badges */}
                   <div className="flex items-center gap-1.5 shrink-0">
                     {/* Payment Badge */}
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 ${
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
                         isFullyPaid
-                          ? "bg-[#DCFCE7] text-[#16A34A]"
-                          : "bg-[#FEF3C7] text-[#D97706]"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200/70"
+                          : "bg-amber-50 text-amber-800 border-amber-200/70"
                       }`}
                     >
-                      {isFullyPaid ? "💰 Paid" : `₹${Math.round(vendorDue / 1000)}k Due`}
+                      <span className={`w-1.5 h-1.5 rounded-full ${isFullyPaid ? "bg-emerald-500" : "bg-amber-500"}`} />
+                      <span>{isFullyPaid ? "Paid" : `${formatINR(vendorDue)} Due`}</span>
                     </span>
-                    {/* Delivery Badge */}
+
+                    {/* Delivery Status Badge */}
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 ${
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
                         isComplete
-                          ? "bg-[#DCFCE7] text-[#16A34A]"
+                          ? "bg-gray-100 text-gray-700 border-gray-200"
                           : isPartial
-                          ? "bg-[#FEF3C7] text-[#D97706]"
-                          : "bg-[#EDE8FB] text-[#5F33E1]"
+                          ? "bg-blue-50 text-blue-700 border-blue-200/70"
+                          : "bg-[#F3EFFF] text-[#5F33E1] border-[#E1D8FA]"
                       }`}
                     >
-                      {isComplete ? (
-                        <><CheckIcon className="w-3 h-3" /><span>Arrived</span></>
-                      ) : isPartial ? (
-                        <><TimeCircleIcon className="w-3 h-3" /><span>Batch In</span></>
-                      ) : (
-                        <><TruckIcon className="w-3 h-3" /><span>In Transit</span></>
-                      )}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Row 2: Location + Phone */}
-                {(order.vendorLocation || order.vendorMobile) && (
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2.5 text-[11px] text-[#524E59]">
-                    {order.vendorLocation && (
-                      <span className="flex items-center gap-1">
-                        <MapPinIcon className="w-3.5 h-3.5 text-[#5F33E1]" />
-                        {order.vendorLocation}
+                      <span>
+                        {isComplete ? "Delivered" : isPartial ? "Partial Batch" : "In Transit"}
                       </span>
-                    )}
-                    {order.vendorMobile && (
-                      <a
-                        href={`tel:${order.vendorMobile.replace(/\s/g, "")}`}
-                        className="flex items-center gap-1 text-[#5F33E1] font-semibold hover:underline"
-                      >
-                        <PhoneIcon className="w-3.5 h-3.5" />
-                        {order.vendorMobile}
-                      </a>
-                    )}
+                    </span>
                   </div>
-                )}
-
-                {/* Row 3: Dates */}
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2.5 text-[11px] text-[#99969E]">
-                  <span>Ordered: <strong className="text-[#120D26]">{order.orderDate}</strong></span>
-                  {order.arrivalDate && (
-                    <span>Arrived: <strong className="text-[#16A34A]">{formatDate(order.arrivalDate)}</strong></span>
-                  )}
                 </div>
 
-                {/* Overdue warning */}
+                {/* Overdue Alert */}
                 {aging && !isComplete && aging.isOverdue && (
-                  <div className="mb-2.5">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-red-50 text-red-600 border border-red-200">
-                      <AlertTriangleIcon className="w-3 h-3 text-red-600 shrink-0" />
-                      <span>{aging.label}</span>
-                    </span>
+                  <div className="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                    <AlertTriangleIcon className="w-3 h-3 text-rose-600 shrink-0" />
+                    <span>{aging.label}</span>
                   </div>
                 )}
 
-                {/* Row 4: Amount + Payment Progress */}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2.5 text-xs">
-                  <span className="text-[#99969E]">
-                    Total Bill: <strong className="text-[#120D26] font-extrabold">{formatINR(order.totalOrderAmount)}</strong>
-                  </span>
-                  {!isFullyPaid && (
-                    <span className="text-[#D97706] font-bold">
-                      Paid: {formatINR(order.amountPaid)} · Due: {formatINR(vendorDue)}
-                    </span>
-                  )}
-                  {order.transportCharges > 0 && (
-                    <span className="text-[#99969E]">
-                      Transport: <strong className="text-[#120D26]">₹{order.transportCharges.toLocaleString("en-IN")}</strong>
-                    </span>
-                  )}
-                </div>
-
-                {/* Row 5: Purchase Details */}
+                {/* Items Description */}
                 {order.purchaseDetails && (
-                  <div className="text-[11px] text-[#524E59] bg-[#F8F9FA] p-2.5 rounded-xl mb-3 flex items-start gap-2">
-                    <BoxIcon className="w-4 h-4 text-[#524E59] shrink-0 mt-0.5" />
-                    <p className="min-w-0 flex-1">{order.purchaseDetails}</p>
+                  <div className="mt-3 text-xs text-[#4A4752] bg-[#F9F8FB] border border-[#F0EDF5] rounded-xl px-3 py-2 flex items-start gap-2">
+                    <BoxIcon className="w-3.5 h-3.5 text-[#7B7882] shrink-0 mt-0.5" />
+                    <span className="line-clamp-2">{order.purchaseDetails}</span>
                   </div>
                 )}
 
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  {/* Pay Balance button — show when vendor is not fully paid */}
-                  {!isFullyPaid && (
-                    <button
-                      onClick={() => handleOpenPayBalance(order)}
-                      className="flex-1 bg-[#FEF3C7] hover:bg-[#FDE68A] text-[#D97706] font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-[0.99]"
-                    >
-                      <BanknoteIcon className="w-4 h-4 text-[#D97706]" />
-                      <span>Pay ₹{Math.round(vendorDue / 1000)}k Balance</span>
-                    </button>
-                  )}
-                  {/* Log Arrival button — show when delivery not complete */}
-                  {!isComplete && (
-                    <button
-                      onClick={() => handleOpenArrivalSheet(order)}
-                      className="flex-1 bg-[#EDE8FB] hover:bg-[#E1D7FA] text-[#5F33E1] font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-[0.99]"
-                    >
-                      <PackageCheckIcon className="w-4 h-4 text-[#5F33E1]" />
-                      <span>Log Arrival</span>
-                    </button>
-                  )}
+                {/* Financial Ledger Details */}
+                <div className="mt-3 pt-3 border-t border-[#F2F0F5] grid grid-cols-3 gap-2 text-xs">
+                  <div>
+                    <span className="text-[10px] text-[#7B7882] font-medium block">Total Bill</span>
+                    <span className="font-bold text-[#120D26]">{formatINR(order.totalOrderAmount)}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-[#7B7882] font-medium block">Amount Paid</span>
+                    <span className="font-semibold text-emerald-700">{formatINR(order.amountPaid)}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-[#7B7882] font-medium block">
+                      {isFullyPaid ? "Transport Freight" : "Balance Due"}
+                    </span>
+                    {isFullyPaid ? (
+                      <span className="font-medium text-[#4A4752]">
+                        {order.transportCharges > 0 ? formatINR(order.transportCharges) : "—"}
+                      </span>
+                    ) : (
+                      <span className="font-bold text-amber-800">{formatINR(vendorDue)}</span>
+                    )}
+                  </div>
                 </div>
+
+                {/* Delivery Date note if delivered */}
+                {order.arrivalDate && (
+                  <p className="mt-2 text-[11px] text-[#7B7882]">
+                    Delivered on <strong className="text-[#120D26]">{formatDate(order.arrivalDate)}</strong>
+                    {order.transportCharges > 0 && ` · Transport freight ${formatINR(order.transportCharges)}`}
+                  </p>
+                )}
+
+                {/* Action Bar */}
+                {(!isFullyPaid || !isComplete) && (
+                  <div className="mt-3.5 pt-3 border-t border-[#F2F0F5] flex gap-2">
+                    {!isFullyPaid && (
+                      <button
+                        onClick={() => handleOpenPayBalance(order)}
+                        className="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300/80 font-semibold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-[0.99]"
+                      >
+                        <BanknoteIcon className="w-3.5 h-3.5 text-amber-800" />
+                        <span>Pay {formatINR(vendorDue)}</span>
+                      </button>
+                    )}
+                    {!isComplete && (
+                      <button
+                        onClick={() => handleOpenArrivalSheet(order)}
+                        className="flex-1 bg-[#5F33E1] hover:bg-[#5029C9] text-white font-semibold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-[0.99] shadow-xs"
+                      >
+                        <PackageCheckIcon className="w-3.5 h-3.5" />
+                        <span>Log Arrival</span>
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       )}
 
-      {/* Log Arrival Bottom Sheet */}
+      {/* Sheets */}
       <LogArrivalSheet
         order={
           selectedOrder
@@ -450,7 +469,6 @@ export default function DeliveriesTab() {
         onSave={handleSaveArrival}
       />
 
-      {/* Pay Balance Bottom Sheet */}
       <PayBalanceSheet
         order={
           selectedOrder
@@ -467,13 +485,12 @@ export default function DeliveriesTab() {
         onSuccess={handlePayBalanceSuccess}
       />
 
-      {/* New Vendor Order Bottom Sheet */}
       <NewOrderSheet
         isOpen={isNewOrderSheetOpen}
         onClose={() => setIsNewOrderSheetOpen(false)}
         onSuccess={() => {
           loadOrders();
-          showToast("New vendor order recorded. Expense auto-logged.");
+          showToast("Vendor order recorded.");
         }}
       />
     </div>

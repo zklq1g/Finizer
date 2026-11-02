@@ -323,10 +323,10 @@ export default function LogArrivalSheet({
                 ))}
               </div>
               {/* Auto-expense notice */}
-              <div className="p-2.5 bg-[#EDE8FB]/60 border border-[#5F33E1]/20 rounded-xl text-[11px] text-[#524E59]">
-                ⚡ Transport expense of <strong className="text-[#5F33E1]">{formatINR(parsedTransport)}</strong>{" "}
-                will be auto-recorded from{" "}
-                <strong>{accounts.find((a) => a.id === transportAccountId)?.name || "selected account"}</strong>
+              <div className="p-2.5 bg-[#F5F3FA] border border-[#E8E4F3] rounded-xl text-[11px] text-[#555260]">
+                Transport charges of <strong className="text-[#120D26]">{formatINR(parsedTransport)}</strong>{" "}
+                will be recorded as an expense from{" "}
+                <strong>{accounts.find((a) => a.id === transportAccountId)?.name || "selected account"}</strong>.
               </div>
             </div>
           )}

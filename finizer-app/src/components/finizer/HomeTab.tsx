@@ -27,13 +27,7 @@ interface HomeTabProps {
   transactions?: TransactionItem[];
 }
 
-const DEFAULT_RECENT: TransactionItem[] = [
-  { id: "1", title: "Daily Counter Sales (Cash)", account: "Cash Drawer", amount: 15400, type: "INCOME", time: "Today, 02:40 PM" },
-  { id: "2", title: "Staff Tea & Evening Snacks", account: "Cash Drawer", amount: 350, type: "EXPENSE", time: "Today, 01:15 PM" },
-  { id: "3", title: "Packaging Boxes Wholesale", account: "Shop UPI", amount: 4800, type: "EXPENSE", time: "Today, 11:30 AM" },
-  { id: "4", title: "UPI Store QR Collections", account: "Shop UPI", amount: 26800, type: "INCOME", time: "Yesterday, 09:10 PM" },
-  { id: "5", title: "Delivery Van Petrol Fuel", account: "Cash Drawer", amount: 1200, type: "EXPENSE", time: "Yesterday, 04:00 PM" },
-];
+const DEFAULT_RECENT: TransactionItem[] = [];
 
 export default function HomeTab({
   onNavigateToDeliveries,
@@ -182,7 +176,12 @@ export default function HomeTab({
         </div>
 
         <div className="space-y-2">
-          {recentItems.map((item) => (
+          {recentItems.length === 0 ? (
+            <div className="bg-white rounded-2xl p-6 text-center border border-[#F2F0F5]">
+              <p className="text-xs text-[#99969E] font-medium">No recent entries recorded yet</p>
+            </div>
+          ) : (
+            recentItems.map((item) => (
             <div
               key={item.id}
               className="bg-white rounded-2xl p-3.5 flex items-center justify-between shadow-xs border border-[#F2F0F5]"
@@ -208,7 +207,8 @@ export default function HomeTab({
                 )}
               </div>
             </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>

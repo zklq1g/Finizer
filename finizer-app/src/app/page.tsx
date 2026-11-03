@@ -35,13 +35,7 @@ interface TransactionItem {
   time: string;
 }
 
-const DEFAULT_TRANSACTIONS: TransactionItem[] = [
-  { id: "1", title: "Daily Counter Sales (Cash)", account: "Main Cash Drawer", amount: 15400, type: "INCOME", time: "Today, 02:40 PM" },
-  { id: "2", title: "Staff Tea & Evening Snacks", account: "Main Cash Drawer", amount: 350, type: "EXPENSE", time: "Today, 01:15 PM" },
-  { id: "3", title: "Packaging Boxes Wholesale", account: "PhonePe UPI", amount: 4800, type: "EXPENSE", time: "Today, 11:30 AM" },
-  { id: "4", title: "UPI Store QR Collections", account: "PhonePe UPI", amount: 26800, type: "INCOME", time: "Yesterday, 09:10 PM" },
-  { id: "5", title: "Delivery Van Petrol Fuel", account: "Main Cash Drawer", amount: 1200, type: "EXPENSE", time: "Yesterday, 04:00 PM" },
-];
+const DEFAULT_TRANSACTIONS: TransactionItem[] = [];
 
 export default function FinizerApp() {
   const { actor } = useActor();
@@ -58,7 +52,7 @@ export default function FinizerApp() {
   const loadData = useCallback(async () => {
     try {
       const dbTx = await api.getTransactions(10);
-      if (dbTx && dbTx.length > 0) {
+      if (dbTx) {
         const mapped: TransactionItem[] = dbTx.map((tx) => {
           const catName = (tx.categories as { name?: string })?.name || "Entry";
           const desc = tx.description ? ` - ${tx.description}` : "";

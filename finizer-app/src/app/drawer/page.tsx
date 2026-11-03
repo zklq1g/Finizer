@@ -32,6 +32,13 @@ const ArrowUpIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
+const TrashIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M20.37 8.91l-1.39 12.19A2 2 0 0 1 17 23H7a2 2 0 0 1-1.98-1.9L3.63 8.91h16.74z" opacity="0.4" />
+    <path d="M2 7.25h20c.41 0 .75-.34.75-.75s-.34-.75-.75-.75h-5.5V5c0-1.1-.9-2-2-2h-5c-1.1 0-2 .9-2 2v.75H2c-.41 0-.75.34-.75.75s.34.75.75.75zM9.5 5c0-.28.22-.5.5-.5h4c.28 0 .5.22.5.5v.75h-5V5z" />
+  </svg>
+);
+
 // ── Helpers ───────────────────────────────────────────────────────────────
 
 function getTodayStr(): string {
@@ -63,6 +70,10 @@ export default function CashDrawerPage() {
   const [miscCategory, setMiscCategory] = useState<Category | null>(null);
   const [todayEntries, setTodayEntries] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Void / Cancel state
+  const [cancelingEntry, setCancelingEntry] = useState<Transaction | null>(null);
+  const [isCanceling, setIsCanceling] = useState(false);
 
   const amountRef = useRef<HTMLInputElement>(null);
 
@@ -125,6 +136,44 @@ export default function CashDrawerPage() {
     }
   }, [drawerAccount, loadTodayEntries]);
 
+  // ── Refresh drawer account balance ─────────────────────────────────
+  const refreshDrawerBalance = useCallback(async () => {
+    try {
+      const accounts = await api.getAccounts();
+      const updatedDrawer =
+        accounts.find((a) => a.id === drawerAccount?.id) ||
+        accounts.find((a) => a.name.toLowerCase().includes("cash drawer") || a.name.toLowerCase().includes("cash box")) ||
+        accounts.find((a) => a.type === "cash");
+      if (updatedDrawer) {
+        setDrawerAccount(updatedDrawer);
+      }
+    } catch (err) {
+      console.warn("Failed to refresh drawer balance:", err);
+    }
+  }, [drawerAccount?.id]);
+
+  // ── Void / Cancel withdrawal handler ───────────────────────────────
+  const handleConfirmVoid = async (entry: Transaction) => {
+    setIsCanceling(true);
+    try {
+      const actorName = whoTook.trim() || "Cash Drawer Staff";
+      await api.softDeleteTransaction(entry.id, actorName);
+
+      // Refresh today's entries & balance
+      await loadTodayEntries();
+      await refreshDrawerBalance();
+
+      setSuccessFlash(`₹${Number(entry.amount).toLocaleString("en-IN")} withdrawal voided & restored`);
+      setTimeout(() => setSuccessFlash(null), 3500);
+      setCancelingEntry(null);
+    } catch (err) {
+      console.error("Failed to void cash drawer withdrawal:", err);
+      setErrorMessage("Failed to void withdrawal. Please try again.");
+    } finally {
+      setIsCanceling(false);
+    }
+  };
+
   // ── Submit handler ────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,8 +220,9 @@ export default function CashDrawerPage() {
       setReason("");
       // Keep whoTook for repeated entries by the same person
 
-      // Reload entries
+      // Reload entries and balance
       loadTodayEntries();
+      refreshDrawerBalance();
 
       // Re-focus amount for next entry
       setTimeout(() => amountRef.current?.focus(), 150);
@@ -345,10 +395,69 @@ export default function CashDrawerPage() {
               <span className="text-sm font-extrabold text-[#EF4444] shrink-0">
                 −{formatINR(Number(entry.amount))}
               </span>
+              <button
+                type="button"
+                onClick={() => setCancelingEntry(entry)}
+                title="Void this withdrawal"
+                className="p-2 rounded-xl text-gray-400 hover:text-[#DC2626] hover:bg-red-50 transition-colors shrink-0 active:scale-95"
+              >
+                <TrashIcon className="w-4 h-4" />
+              </button>
             </div>
           ))
         )}
       </div>
+
+      {/* Void Confirmation Modal */}
+      {cancelingEntry && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-5">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-[2px] animate-fade-in"
+            onClick={() => !isCanceling && setCancelingEntry(null)}
+          />
+          <div className="relative bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-slide-up z-10 border border-[#F2F0F5]">
+            <div className="w-12 h-12 rounded-2xl bg-red-50 text-[#DC2626] flex items-center justify-center mb-4 mx-auto">
+              <TrashIcon className="w-6 h-6 text-[#DC2626]" />
+            </div>
+            <h3 className="text-base font-black text-[#120D26] text-center mb-1">
+              Void Cash Withdrawal?
+            </h3>
+            <p className="text-xs text-[#99969E] text-center mb-5 leading-relaxed">
+              Cancel withdrawal of{" "}
+              <span className="font-extrabold text-[#120D26]">
+                {formatINR(Number(cancelingEntry.amount))}
+              </span>
+              {cancelingEntry.description ? ` (${cancelingEntry.description})` : ""}? The cash will be returned to the drawer balance.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                disabled={isCanceling}
+                onClick={() => setCancelingEntry(null)}
+                className="flex-1 py-3.5 rounded-2xl border border-[#F2F0F5] text-xs font-bold text-[#99969E] hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Keep Entry
+              </button>
+              <button
+                type="button"
+                disabled={isCanceling}
+                onClick={() => handleConfirmVoid(cancelingEntry)}
+                className="flex-1 py-3.5 rounded-2xl bg-[#DC2626] text-white text-xs font-extrabold hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-md shadow-red-500/20"
+              >
+                {isCanceling ? (
+                  <>
+                    <SpinnerIcon className="w-4 h-4 animate-spin text-white" />
+                    <span>Voiding...</span>
+                  </>
+                ) : (
+                  <span>Void Withdrawal</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -24,6 +24,9 @@ import MonthEndAllocator from "../components/finizer/MonthEndAllocator";
 import { api } from "@/services/api";
 import { useActor } from "@/context/ActorContext";
 
+// Auth
+import AdminLockScreen from "../components/lock/AdminLockScreen";
+
 type TabId = "home" | "entries" | "deliveries" | "settings";
 
 interface TransactionItem {
@@ -45,6 +48,25 @@ export default function FinizerApp() {
   const [isMonthEndOpen, setIsMonthEndOpen] = useState<boolean>(false);
   const [hasRecentEditBadge, setHasRecentEditBadge] = useState<boolean>(false);
   const [lastSyncTime, setLastSyncTime] = useState<string>("Saved just now");
+
+  // ── Admin auth ─────────────────────────────────────────────────────
+  const [adminUnlocked, setAdminUnlocked] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (sessionStorage.getItem("finizer_admin_session") === "1") {
+      setAdminUnlocked(true);
+    }
+  }, []);
+
+  const handleAdminUnlock = useCallback(() => {
+    sessionStorage.setItem("finizer_admin_session", "1");
+    setAdminUnlocked(true);
+  }, []);
+
+  const handleAdminLock = useCallback(() => {
+    sessionStorage.removeItem("finizer_admin_session");
+    setAdminUnlocked(false);
+  }, []);
 
   // Live in-memory transactions feed
   const [transactions, setTransactions] = useState<TransactionItem[]>(DEFAULT_TRANSACTIONS);
@@ -121,6 +143,9 @@ export default function FinizerApp() {
 
   return (
     <div className="min-h-screen bg-[#F0F2F5] flex flex-col items-center justify-start sm:justify-center p-0 sm:py-4 sm:px-2 overflow-y-auto">
+      {/* Admin Lock Screen */}
+      {!adminUnlocked && <AdminLockScreen onUnlock={handleAdminUnlock} />}
+
       {/* Main Mobile App Frame */}
       <div className="relative w-full max-w-md h-[100dvh] sm:h-[min(844px,calc(100vh-2rem))] bg-[#F8F9FA] sm:rounded-[40px] shadow-2xl sm:border-4 sm:border-gray-800 flex flex-col overflow-hidden">
         
@@ -147,20 +172,31 @@ export default function FinizerApp() {
             {lastSyncTime}
           </span>
 
-          {/* Right: Partner Trust Shield */}
-          <button
-            onClick={() => {
-              setIsActivityLogOpen(true);
-              setHasRecentEditBadge(false);
-            }}
-            title="Partner Trust Activity Log"
-            className="relative w-9 h-9 rounded-xl bg-[#F5F2FF] hover:bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1] transition-colors"
-          >
-            <ShieldTickIcon className="w-5 h-5 text-[#5F33E1]" />
-            {hasRecentEditBadge && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#5F33E1] rounded-full ring-2 ring-white" />
-            )}
-          </button>
+          {/* Right: Lock + Partner Trust Shield */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleAdminLock}
+              title="Lock Admin"
+              className="w-9 h-9 rounded-xl bg-[#F5F2FF] hover:bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1] transition-colors"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => {
+                setIsActivityLogOpen(true);
+                setHasRecentEditBadge(false);
+              }}
+              title="Partner Trust Activity Log"
+              className="relative w-9 h-9 rounded-xl bg-[#F5F2FF] hover:bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1] transition-colors"
+            >
+              <ShieldTickIcon className="w-5 h-5 text-[#5F33E1]" />
+              {hasRecentEditBadge && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#5F33E1] rounded-full ring-2 ring-white" />
+              )}
+            </button>
+          </div>
         </header>
 
         {/* ── 2. SCROLLABLE TAB CONTENT ─────────────────── */}

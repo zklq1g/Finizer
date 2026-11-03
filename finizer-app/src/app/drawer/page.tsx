@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "@/services/api";
 import { formatINR } from "@/utils/format";
 import type { Account, Category, Transaction } from "@/types";
+import DrawerLockScreen from "@/components/lock/DrawerLockScreen";
 
 // ── Inline icons (keep this page self-contained for kiosk mode) ──────────
 
@@ -57,6 +58,25 @@ function formatTime(isoString: string): string {
 // ── Component ────────────────────────────────────────────────────────────
 
 export default function CashDrawerPage() {
+  // ── Drawer auth ────────────────────────────────────────────────────
+  const [drawerUnlocked, setDrawerUnlocked] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (sessionStorage.getItem("finizer_drawer_session") === "1") {
+      setDrawerUnlocked(true);
+    }
+  }, []);
+
+  const handleDrawerUnlock = useCallback(() => {
+    sessionStorage.setItem("finizer_drawer_session", "1");
+    setDrawerUnlocked(true);
+  }, []);
+
+  const handleDrawerLock = useCallback(() => {
+    sessionStorage.removeItem("finizer_drawer_session");
+    setDrawerUnlocked(false);
+  }, []);
+
   // Form state
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
@@ -259,11 +279,27 @@ export default function CashDrawerPage() {
   // ── Render ────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-[family-name:var(--font-manrope)]">
+      {/* Drawer Lock Screen */}
+      {!drawerUnlocked && <DrawerLockScreen onUnlock={handleDrawerUnlock} />}
+
       {/* Header */}
       <div className="bg-[#5F33E1] px-5 pt-12 pb-6 text-white">
-        <div className="flex items-center gap-3 mb-1">
-          <CashIcon className="w-7 h-7 text-white/90" />
-          <h1 className="text-xl font-black tracking-tight">Cash Drawer</h1>
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-3">
+            <CashIcon className="w-7 h-7 text-white/90" />
+            <h1 className="text-xl font-black tracking-tight">Cash Drawer</h1>
+          </div>
+          {/* Lock Kiosk button */}
+          <button
+            onClick={handleDrawerLock}
+            title="Lock Kiosk"
+            className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 active:bg-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-colors"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+            </svg>
+            Lock
+          </button>
         </div>
         <p className="text-xs text-white/70 font-medium">
           Record cash going out · {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short", year: "numeric" })}

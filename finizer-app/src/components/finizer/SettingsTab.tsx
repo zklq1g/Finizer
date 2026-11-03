@@ -142,8 +142,96 @@ export default function SettingsTab({ onOpenActivityLog, onOpenMonthEnd }: Setti
     }
   };
 
-  const handlePrintDaily = () => {
-    window.print();
+  const [isPrintingLedger, setIsPrintingLedger] = useState(false);
+
+  const handlePrintDaily = async () => {
+    setIsPrintingLedger(true);
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      const all = await api.getTransactions(500);
+      const todayTxns = all.filter((t) => (t.date || "").startsWith(today));
+
+      const totalIncome = todayTxns
+        .filter((t) => t.type === "INCOME")
+        .reduce((s, t) => s + t.amount, 0);
+      const totalExpense = todayTxns
+        .filter((t) => t.type === "EXPENSE")
+        .reduce((s, t) => s + t.amount, 0);
+
+      const fmt = (n: number) =>
+        "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2 });
+
+      const rows = todayTxns
+        .map(
+          (t) => `
+        <tr>
+          <td>${t.date ?? ""}</td>
+          <td>${(t.categories as { name: string } | undefined)?.name ?? t.category_id ?? "—"}</td>
+          <td>${t.description ?? "—"}</td>
+          <td style="color:${t.type === "INCOME" ? "#16A34A" : "#DC2626"}">
+            ${t.type === "INCOME" ? "+" : "-"}${fmt(t.amount)}
+          </td>
+        </tr>`
+        )
+        .join("");
+
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Daily Ledger — ${today}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; font-size: 12px; color: #120D26; padding: 24px; }
+    h1 { font-size: 20px; font-weight: 800; margin-bottom: 2px; }
+    .sub { color: #99969E; font-size: 11px; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #99969E; border-bottom: 2px solid #F2F0F5; padding: 6px 8px; }
+    td { padding: 8px 8px; border-bottom: 1px solid #F8F9FA; vertical-align: top; }
+    .summary { margin-top: 20px; display: flex; gap: 24px; }
+    .card { flex: 1; border: 1px solid #F2F0F5; border-radius: 10px; padding: 10px 14px; }
+    .card .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #99969E; }
+    .card .val { font-size: 16px; font-weight: 800; margin-top: 2px; }
+    .income { color: #16A34A; }
+    .expense { color: #DC2626; }
+    .net-positive { color: #16A34A; }
+    .net-negative { color: #DC2626; }
+    .empty { text-align: center; color: #99969E; padding: 32px 0; }
+    @media print { body { padding: 16px; } }
+  </style>
+</head>
+<body>
+  <h1>Daily Ledger</h1>
+  <p class="sub">Finizer · ${today} · Printed ${new Date().toLocaleTimeString("en-IN")}</p>
+  ${
+    todayTxns.length === 0
+      ? `<p class="empty">No transactions recorded today.</p>`
+      : `<table>
+      <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="summary">
+      <div class="card"><div class="label">Total Income</div><div class="val income">${fmt(totalIncome)}</div></div>
+      <div class="card"><div class="label">Total Expense</div><div class="val expense">${fmt(totalExpense)}</div></div>
+      <div class="card"><div class="label">Net</div><div class="val ${totalIncome - totalExpense >= 0 ? "net-positive" : "net-negative"}">${fmt(totalIncome - totalExpense)}</div></div>
+    </div>`
+  }
+</body>
+</html>`;
+
+      const win = window.open("", "_blank", "width=800,height=600");
+      if (win) {
+        win.document.write(html);
+        win.document.close();
+        win.focus();
+        setTimeout(() => win.print(), 400);
+      }
+    } catch (err) {
+      console.error("Print daily ledger failed:", err);
+      showToast("Could not load today's transactions for printing.", "error");
+    } finally {
+      setIsPrintingLedger(false);
+    }
   };
 
   return (
@@ -296,15 +384,20 @@ export default function SettingsTab({ onOpenActivityLog, onOpenMonthEnd }: Setti
         {/* Print Daily Ledger */}
         <button
           onClick={handlePrintDaily}
-          className="w-full bg-white rounded-2xl p-4 flex items-center justify-between border border-[#F2F0F5] hover:border-gray-300 transition-all text-left shadow-xs group"
+          disabled={isPrintingLedger}
+          className="w-full bg-white rounded-2xl p-4 flex items-center justify-between border border-[#F2F0F5] hover:border-gray-300 transition-all text-left shadow-xs group disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-xl bg-[#F5F2FF] flex items-center justify-center text-[#5F33E1]">
-              <PrinterIcon className="w-5 h-5 text-[#5F33E1]" />
+              {isPrintingLedger ? (
+                <SpinnerIcon className="w-5 h-5 text-[#5F33E1] animate-spin" />
+              ) : (
+                <PrinterIcon className="w-5 h-5 text-[#5F33E1]" />
+              )}
             </div>
             <div>
               <p className="text-xs font-bold text-[#120D26] group-hover:text-[#5F33E1] transition-colors">
-                Print Daily Ledger Sheet
+                {isPrintingLedger ? "Loading today's entries..." : "Print Daily Ledger Sheet"}
               </p>
               <p className="text-[11px] text-[#99969E]">
                 Clean B&W view ready to staple into physical shop diary
@@ -338,7 +431,18 @@ export default function SettingsTab({ onOpenActivityLog, onOpenMonthEnd }: Setti
               <SpinnerIcon className="w-5 h-5 animate-spin text-[#5F33E1]" />
             </div>
           ) : accounts.length === 0 ? (
-            <p className="p-4 text-xs text-[#99969E] text-center">No payment accounts configured yet</p>
+            <div className="p-5 flex flex-col items-center gap-3 text-center">
+              <p className="text-xs text-[#99969E]">No payment accounts configured yet</p>
+              <button
+                onClick={() => {
+                  setEditingAccount(null);
+                  setAccountSheetOpen(true);
+                }}
+                className="text-xs font-bold text-white bg-[#5F33E1] px-4 py-2 rounded-xl hover:bg-[#5029C9] transition-colors"
+              >
+                + Create your first account
+              </button>
+            </div>
           ) : (
             accounts.map((acc) => (
               <div key={acc.id} className="p-3.5 flex justify-between items-center hover:bg-[#F9F9FB] transition-colors">
@@ -460,6 +564,19 @@ export default function SettingsTab({ onOpenActivityLog, onOpenMonthEnd }: Setti
         </div>
         <ChevronRightIcon className="w-5 h-5 text-[#5F33E1] shrink-0" />
       </button>
+
+      {/* 6. About & Version */}
+      <section className="space-y-1 pt-2 border-t border-[#F2F0F5]">
+        <div className="flex flex-col items-center gap-1 py-4 text-center">
+          <p className="text-[13px] font-black text-[#120D26] tracking-tight">Finizer</p>
+          <p className="text-[11px] text-[#99969E] font-medium">
+            Retail Finance Manager · v0.1.0
+          </p>
+          <p className="text-[10px] text-[#C5C2CC] mt-1">
+            Built for Indian store owners · Data stays in your Supabase
+          </p>
+        </div>
+      </section>
 
       {/* Interactive Bottom Sheets */}
       <AccountSheet

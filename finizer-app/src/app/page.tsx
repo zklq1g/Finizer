@@ -142,38 +142,72 @@ export default function FinizerApp() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F0F2F5] flex flex-col items-center justify-start sm:justify-center p-0 sm:py-4 sm:px-2 overflow-y-auto">
+    <div className="min-h-screen bg-[#F0F2F5] flex flex-col items-center justify-start lg:justify-start p-0 overflow-y-auto lg:overflow-hidden">
       {/* Admin Lock Screen */}
       {!adminUnlocked && <AdminLockScreen onUnlock={handleAdminUnlock} />}
 
-      {/* Main Mobile App Frame */}
-      <div className="relative w-full max-w-md h-[100dvh] sm:h-[min(844px,calc(100vh-2rem))] bg-[#F8F9FA] sm:rounded-[40px] shadow-2xl sm:border-4 sm:border-gray-800 flex flex-col overflow-hidden">
-        
-        {/* ── 1. GLOBAL TOP BAR ─────────────────────────── */}
-        <header className="bg-white px-5 py-3.5 flex items-center justify-between border-b border-[#F2F0F5] sticky top-0 z-30 shrink-0">
-          {/* Left: Store Selector with App Icon */}
-          <div className="flex items-center gap-2 cursor-pointer">
-            <Image
-              src="/icon.png"
-              alt="Finizer"
-              width={26}
-              height={26}
-              className="w-[26px] h-[26px] rounded-lg shadow-xs object-contain"
-              priority
-            />
-            <div className="flex items-center gap-1.5">
-              <h1 className="text-base font-black text-[#120D26] tracking-tight">Main Store</h1>
-              <ArrowDownIcon className="w-3.5 h-3.5 text-gray-400" />
+      {/* ══════════════════════════════════════════════════════════ */}
+      {/* DESKTOP LAYOUT (lg+): sidebar + full-width content       */}
+      {/* MOBILE  LAYOUT (<lg): original phone-style single column */}
+      {/* ══════════════════════════════════════════════════════════ */}
+
+      <div className="relative w-full h-[100dvh] lg:h-screen bg-[#F8F9FA] flex flex-col lg:flex-row overflow-hidden">
+
+        {/* ── DESKTOP SIDEBAR (hidden on mobile) ─────────── */}
+        <aside className="hidden lg:flex lg:flex-col lg:w-[240px] xl:w-[260px] bg-white border-r border-[#F2F0F5] shrink-0 h-full">
+          {/* Sidebar Header / Brand */}
+          <div className="px-5 py-5 border-b border-[#F2F0F5]">
+            <div className="flex items-center gap-2.5 cursor-pointer">
+              <Image
+                src="/icon.png"
+                alt="Finizer"
+                width={32}
+                height={32}
+                className="w-8 h-8 rounded-xl shadow-xs object-contain"
+                priority
+              />
+              <div>
+                <h1 className="text-sm font-black text-[#120D26] tracking-tight leading-tight">Main Store</h1>
+                <span className="text-[10px] font-medium text-gray-400">{lastSyncTime}</span>
+              </div>
             </div>
           </div>
 
-          {/* Center: Human Sync Status */}
-          <span className="text-[11px] font-medium text-gray-400">
-            {lastSyncTime}
-          </span>
+          {/* Sidebar Navigation */}
+          <nav className="flex-1 px-3 py-4 space-y-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                    isActive
+                      ? "bg-[#EDE8FB] text-[#5F33E1]"
+                      : "text-[#99969E] hover:bg-[#F8F9FA] hover:text-[#120D26]"
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 ${isActive ? "text-[#5F33E1]" : "text-[#99969E]"}`} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
 
-          {/* Right: Lock + Partner Trust Shield */}
-          <div className="flex items-center gap-2">
+          {/* Sidebar Quick Add Button */}
+          <div className="px-3 pb-4">
+            <button
+              onClick={() => setIsQuickAddOpen(true)}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-[#5F33E1] text-white rounded-xl text-sm font-bold shadow-lg shadow-[#5F33E1]/25 hover:bg-[#5029C9] active:scale-[0.98] transition-all"
+            >
+              <AddIcon className="w-5 h-5 text-white" />
+              <span>Quick Add</span>
+            </button>
+          </div>
+
+          {/* Sidebar Footer Actions */}
+          <div className="px-3 pb-5 border-t border-[#F2F0F5] pt-3 flex items-center justify-between">
             <button
               onClick={handleAdminLock}
               title="Lock Admin"
@@ -197,41 +231,119 @@ export default function FinizerApp() {
               )}
             </button>
           </div>
-        </header>
+        </aside>
 
-        {/* ── 2. SCROLLABLE TAB CONTENT ─────────────────── */}
-        <main className="flex-1 overflow-y-auto px-5 pt-5 pb-28 scrollbar-hide">
-          {activeTab === "home" && (
-            <HomeTab
-              transactions={transactions}
-              onNavigateToDeliveries={() => setActiveTab("deliveries")}
-              onOpenMonthEnd={() => setIsMonthEndOpen(true)}
-            />
-          )}
+        {/* ── MAIN CONTENT AREA ────────────────────────── */}
+        <div className="flex-1 flex flex-col min-w-0 h-full">
 
-          {activeTab === "entries" && <EntriesTab />}
+          {/* ── 1. MOBILE TOP BAR (hidden on desktop) ────── */}
+          <header className="lg:hidden bg-white px-5 py-3.5 flex items-center justify-between border-b border-[#F2F0F5] sticky top-0 z-30 shrink-0">
+            {/* Left: Store Selector with App Icon */}
+            <div className="flex items-center gap-2 cursor-pointer">
+              <Image
+                src="/icon.png"
+                alt="Finizer"
+                width={26}
+                height={26}
+                className="w-[26px] h-[26px] rounded-lg shadow-xs object-contain"
+                priority
+              />
+              <div className="flex items-center gap-1.5">
+                <h1 className="text-base font-black text-[#120D26] tracking-tight">Main Store</h1>
+                <ArrowDownIcon className="w-3.5 h-3.5 text-gray-400" />
+              </div>
+            </div>
 
-          {activeTab === "deliveries" && <DeliveriesTab />}
+            {/* Center: Human Sync Status */}
+            <span className="text-[11px] font-medium text-gray-400">
+              {lastSyncTime}
+            </span>
 
-          {activeTab === "settings" && (
-            <SettingsTab
-              onOpenActivityLog={() => setIsActivityLogOpen(true)}
-              onOpenMonthEnd={() => setIsMonthEndOpen(true)}
-            />
-          )}
-        </main>
+            {/* Right: Lock + Partner Trust Shield */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleAdminLock}
+                title="Lock Admin"
+                className="w-9 h-9 rounded-xl bg-[#F5F2FF] hover:bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1] transition-colors"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                  <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+                </svg>
+              </button>
+              <button
+                onClick={() => {
+                  setIsActivityLogOpen(true);
+                  setHasRecentEditBadge(false);
+                }}
+                title="Partner Trust Activity Log"
+                className="relative w-9 h-9 rounded-xl bg-[#F5F2FF] hover:bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1] transition-colors"
+              >
+                <ShieldTickIcon className="w-5 h-5 text-[#5F33E1]" />
+                {hasRecentEditBadge && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#5F33E1] rounded-full ring-2 ring-white" />
+                )}
+              </button>
+            </div>
+          </header>
 
-        {/* ── 3. THE IMMUTABLE FAB (Always Quick Add) ────── */}
+          {/* ── DESKTOP TOP BAR (hidden on mobile) ────────── */}
+          <header className="hidden lg:flex bg-white px-8 py-4 items-center justify-between border-b border-[#F2F0F5] shrink-0">
+            <div>
+              <h2 className="text-xl font-black text-[#120D26] tracking-tight capitalize">{activeTab}</h2>
+              <p className="text-xs text-[#99969E] font-medium">
+                {activeTab === "home" && "Business overview & recent activity"}
+                {activeTab === "entries" && "Digital store diary"}
+                {activeTab === "deliveries" && "Vendor orders, payments & arrivals"}
+                {activeTab === "settings" && "Store operations & accounting"}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsQuickAddOpen(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-[#5F33E1] text-white rounded-xl text-sm font-bold shadow-lg shadow-[#5F33E1]/25 hover:bg-[#5029C9] active:scale-[0.98] transition-all"
+              >
+                <AddIcon className="w-4 h-4 text-white" />
+                <span>Quick Add</span>
+              </button>
+            </div>
+          </header>
+
+          {/* ── 2. SCROLLABLE TAB CONTENT ─────────────────── */}
+          <main className="flex-1 overflow-y-auto px-5 lg:px-8 xl:px-12 pt-5 lg:pt-6 pb-28 lg:pb-8 scrollbar-hide">
+            <div className="max-w-4xl mx-auto">
+              {activeTab === "home" && (
+                <HomeTab
+                  transactions={transactions}
+                  onNavigateToDeliveries={() => setActiveTab("deliveries")}
+                  onOpenMonthEnd={() => setIsMonthEndOpen(true)}
+                />
+              )}
+
+              {activeTab === "entries" && <EntriesTab />}
+
+              {activeTab === "deliveries" && <DeliveriesTab />}
+
+              {activeTab === "settings" && (
+                <SettingsTab
+                  onOpenActivityLog={() => setIsActivityLogOpen(true)}
+                  onOpenMonthEnd={() => setIsMonthEndOpen(true)}
+                />
+              )}
+            </div>
+          </main>
+        </div>
+
+        {/* ── 3. MOBILE FAB (hidden on desktop) ──────────── */}
         <button
           onClick={() => setIsQuickAddOpen(true)}
-          className="absolute bottom-5 left-1/2 -translate-x-1/2 w-14 h-14 bg-[#5F33E1] text-white rounded-full shadow-lg shadow-[#5F33E1]/40 border-4 border-white flex items-center justify-center z-40 active:scale-95 transition-transform"
+          className="lg:hidden absolute bottom-5 left-1/2 -translate-x-1/2 w-14 h-14 bg-[#5F33E1] text-white rounded-full shadow-lg shadow-[#5F33E1]/40 border-4 border-white flex items-center justify-center z-40 active:scale-95 transition-transform"
           aria-label="Quick Add Transaction"
         >
           <AddIcon className="w-7 h-7 text-white" />
         </button>
 
-        {/* ── 4. GLOBAL BOTTOM NAVIGATION ───────────────── */}
-        <nav className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-[#F2F0F5] px-4 py-2.5 flex items-center justify-around z-30 shrink-0">
+        {/* ── 4. MOBILE BOTTOM NAVIGATION (hidden on desktop) ── */}
+        <nav className="lg:hidden absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-[#F2F0F5] px-4 py-2.5 flex items-center justify-around z-30 shrink-0">
           {navItems.map((item, idx) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;

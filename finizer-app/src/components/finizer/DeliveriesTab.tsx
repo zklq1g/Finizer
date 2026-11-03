@@ -216,7 +216,7 @@ export default function DeliveriesTab() {
     <div className="flex flex-col gap-5 animate-fade-in">
       {/* Top Header */}
       <div className="flex items-center justify-between">
-        <div>
+        <div className="lg:hidden">
           <h1 className="text-xl font-bold tracking-tight text-[#120D26]">Deliveries</h1>
           <p className="text-xs text-[#7B7882] font-medium">Vendor orders, payments & arrivals</p>
         </div>
@@ -306,7 +306,7 @@ export default function DeliveriesTab() {
           </p>
         </div>
       ) : (
-        <div className="space-y-3.5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
           {filteredOrders.map((order) => {
             const isComplete = order.status === "COMPLETE";
             const isPartial = order.status === "PARTIAL";
@@ -319,16 +319,27 @@ export default function DeliveriesTab() {
                 key={order.id}
                 className="bg-white rounded-2xl p-4 border border-[#ECE9F1] shadow-xs hover:border-[#D8D4E2] transition-colors"
               >
-                {/* Header: Vendor Name + Status Indicators */}
-                <div className="flex items-start justify-between gap-2">
+                {/* Header: Vendor Name + Status */}
+                <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-[#120D26] text-sm tracking-tight truncate">
-                      {order.vendorName}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-[#120D26] text-sm tracking-tight truncate">
+                        {order.vendorName}
+                      </h3>
+                      <span className={`text-[11px] font-semibold shrink-0 ${
+                        isComplete
+                          ? "text-[#7B7882]"
+                          : isPartial
+                          ? "text-blue-600"
+                          : "text-[#5F33E1]"
+                      }`}>
+                        · {isComplete ? "Delivered" : isPartial ? "Partial" : "In Transit"}
+                      </span>
+                    </div>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[11px] text-[#7B7882]">
                       {order.vendorLocation && (
                         <span className="flex items-center gap-1">
-                          <MapPinIcon className="w-3 h-3 text-[#7B7882]" />
+                          <MapPinIcon className="w-3 h-3 text-[#9E9BA5]" />
                           <span>{order.vendorLocation}</span>
                         </span>
                       )}
@@ -345,43 +356,20 @@ export default function DeliveriesTab() {
                     </div>
                   </div>
 
-                  {/* Refined Status Badges */}
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {/* Payment Badge */}
-                    <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
-                        isFullyPaid
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200/70"
-                          : "bg-amber-50 text-amber-800 border-amber-200/70"
-                      }`}
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full ${isFullyPaid ? "bg-emerald-500" : "bg-amber-500"}`} />
-                      <span>{isFullyPaid ? "Paid" : `${formatINR(vendorDue)} Due`}</span>
-                    </span>
-
-                    {/* Delivery Status Badge */}
-                    <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
-                        isComplete
-                          ? "bg-gray-100 text-gray-700 border-gray-200"
-                          : isPartial
-                          ? "bg-blue-50 text-blue-700 border-blue-200/70"
-                          : "bg-[#F3EFFF] text-[#5F33E1] border-[#E1D8FA]"
-                      }`}
-                    >
-                      <span>
-                        {isComplete ? "Delivered" : isPartial ? "Partial Batch" : "In Transit"}
-                      </span>
-                    </span>
-                  </div>
+                  {/* Payment status — single subtle indicator */}
+                  <span className={`text-xs font-semibold shrink-0 mt-0.5 ${
+                    isFullyPaid ? "text-emerald-600" : "text-amber-700"
+                  }`}>
+                    {isFullyPaid ? "✓ Paid" : `${formatINR(vendorDue)} due`}
+                  </span>
                 </div>
 
                 {/* Overdue Alert */}
                 {aging && !isComplete && aging.isOverdue && (
-                  <div className="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                    <AlertTriangleIcon className="w-3 h-3 text-rose-600 shrink-0" />
+                  <p className="mt-2 text-[11px] font-medium text-rose-600 flex items-center gap-1">
+                    <AlertTriangleIcon className="w-3 h-3 shrink-0" />
                     <span>{aging.label}</span>
-                  </div>
+                  </p>
                 )}
 
                 {/* Items Description */}

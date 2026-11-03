@@ -156,7 +156,7 @@ export default function EntriesTab() {
     <div className="flex flex-col gap-5 animate-fade-in">
       {/* Header with Print Action */}
       <div className="flex items-center justify-between">
-        <div>
+        <div className="lg:hidden">
           <h1 className="text-2xl font-black text-[#120D26]">Entries</h1>
           <p className="text-xs text-[#99969E] font-medium">Digital Store Diary</p>
         </div>

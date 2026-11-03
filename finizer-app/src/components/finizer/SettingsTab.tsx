@@ -236,7 +236,7 @@ export default function SettingsTab({ onOpenActivityLog, onOpenMonthEnd }: Setti
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in pb-12">
-      <div>
+      <div className="lg:hidden">
         <h1 className="text-2xl font-black text-[#120D26]">Settings</h1>
         <p className="text-xs text-[#99969E] font-medium">Store Operations & Accounting</p>
       </div>
@@ -408,6 +408,8 @@ export default function SettingsTab({ onOpenActivityLog, onOpenMonthEnd }: Setti
         </button>
       </div>
 
+      {/* 3 & 4. Accounts + Categories side by side on desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* 3. Manage Accounts CRUD */}
       <section className="space-y-3">
         <div className="flex justify-between items-center">
@@ -543,6 +545,7 @@ export default function SettingsTab({ onOpenActivityLog, onOpenMonthEnd }: Setti
           )}
         </div>
       </section>
+      </div>{/* end accounts+categories grid */}
 
       {/* 5. Partner Trust Quick Access */}
       <button

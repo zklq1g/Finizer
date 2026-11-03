@@ -77,6 +77,8 @@ export default function HomeTab({
 
   return (
     <div className="flex flex-col gap-5 animate-fade-in">
+      {/* 1 + 2: Hero + P&L side by side on desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
       {/* 1. Total Business Value Hero Card */}
       <div className="bg-[#5F33E1] text-white rounded-3xl p-6 shadow-lg shadow-[#5F33E1]/25 relative overflow-hidden">
         {/* Ambient background glow */}
@@ -144,6 +146,7 @@ export default function HomeTab({
           </div>
         </div>
       </div>
+      </div>{/* end grid */}
 
       {/* 3. Deliveries Alert Banner (if handler passed) */}
       {onNavigateToDeliveries && (

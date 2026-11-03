@@ -182,7 +182,7 @@ export default function LogArrivalSheet({
   };
 
   return (
-    <div className="absolute inset-0 z-50 flex items-end justify-center pointer-events-auto">
+    <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center pointer-events-auto">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/45 backdrop-blur-[2px] transition-opacity animate-fade-in"
@@ -190,7 +190,7 @@ export default function LogArrivalSheet({
       />
 
       {/* Sheet Container */}
-      <div className="relative w-full max-w-md bg-white rounded-t-[32px] shadow-2xl animate-slide-up max-h-[92%] flex flex-col z-10 overflow-hidden">
+      <div className="relative w-full max-w-md lg:max-w-lg bg-white rounded-t-[32px] lg:rounded-[24px] shadow-2xl animate-slide-up lg:animate-fade-in max-h-[92%] lg:max-h-[85vh] flex flex-col z-10 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[#F2F0F5] shrink-0">
           <div className="flex items-center gap-3">
@@ -429,7 +429,7 @@ export default function LogArrivalSheet({
         </form>
 
         {/* Sticky Footer */}
-        <div className="p-5 pt-3 pb-8 border-t border-[#F2F0F5] bg-white shrink-0">
+        <div className="p-5 pt-3 border-t border-[#F2F0F5] bg-white shrink-0" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0.75rem))' }}>
           <button
             type="submit"
             form="log-arrival-form"

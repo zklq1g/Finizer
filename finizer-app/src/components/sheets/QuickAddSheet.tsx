@@ -190,7 +190,7 @@ export default function QuickAddSheet({
   const activeCategories = categories[type] || [];
 
   return (
-    <div className="absolute inset-0 z-50 flex items-end justify-center pointer-events-auto">
+    <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center pointer-events-auto">
       {/* Dimmed backdrop */}
       <div
         className="absolute inset-0 bg-black/45 backdrop-blur-xs transition-opacity animate-fade-in"
@@ -198,7 +198,7 @@ export default function QuickAddSheet({
       />
 
       {/* Sheet Container: Flex column ensures header/footer stay visible while middle scrolls */}
-      <div className="relative w-full max-w-md bg-white rounded-t-[32px] shadow-2xl animate-slide-up max-h-[92%] flex flex-col z-10 overflow-hidden">
+      <div className="relative w-full max-w-md lg:max-w-lg bg-white rounded-t-[32px] lg:rounded-[24px] shadow-2xl animate-slide-up lg:animate-fade-in max-h-[92%] lg:max-h-[85vh] flex flex-col z-10 overflow-hidden">
         
         {/* 1. HEADER (Fixed Top) */}
         <div className="flex flex-col items-center pt-3 pb-3 px-5 border-b border-[#F2F0F5] shrink-0 bg-white">

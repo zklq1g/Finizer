@@ -32,11 +32,6 @@ interface AccountItem {
   balance: number;
 }
 
-const DEFAULT_ACCOUNTS: AccountItem[] = [
-  { id: "acc-1", name: "Main Cash Drawer", balance: 18500 },
-  { id: "acc-2", name: "PhonePe UPI", balance: 42000 },
-  { id: "acc-3", name: "HDFC Bank Account", balance: 150000 },
-];
 
 interface LogArrivalSheetProps {
   order: { id: string; vendorName: string; amountPaid: number } | null;
@@ -59,7 +54,7 @@ export default function LogArrivalSheet({
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [isLastParcel, setIsLastParcel] = useState(true);
-  const [accounts, setAccounts] = useState<AccountItem[]>(DEFAULT_ACCOUNTS);
+  const [accounts, setAccounts] = useState<AccountItem[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);

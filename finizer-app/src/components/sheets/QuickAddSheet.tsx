@@ -33,27 +33,9 @@ interface CategoryItem {
   name: string;
 }
 
-const DEFAULT_ACCOUNTS: AccountItem[] = [
-  { id: "acc-1", name: "Main Cash Drawer", balance: 18500 },
-  { id: "acc-2", name: "PhonePe UPI", balance: 42000 },
-  { id: "acc-3", name: "HDFC Bank Account", balance: 150000 },
-];
-
 const DEFAULT_CATEGORIES: Record<"EXPENSE" | "INCOME", CategoryItem[]> = {
-  EXPENSE: [
-    { id: "cat-1", name: "Staff Welfare & Snacks" },
-    { id: "cat-2", name: "Transportation & Petrol" },
-    { id: "cat-3", name: "Inventory Purchase" },
-    { id: "cat-4", name: "Rent" },
-    { id: "cat-5", name: "Electricity & Utilities" },
-    { id: "cat-6", name: "Repairs & Maintenance" },
-  ],
-  INCOME: [
-    { id: "cat-7", name: "Sales Revenue" },
-    { id: "cat-8", name: "UPI Settlements" },
-    { id: "cat-9", name: "Wholesale Order" },
-    { id: "cat-10", name: "Scrap & Packaging" },
-  ],
+  EXPENSE: [],
+  INCOME: [],
 };
 
 export default function QuickAddSheet({
@@ -63,10 +45,10 @@ export default function QuickAddSheet({
 }: QuickAddSheetProps) {
   const [amount, setAmount] = useState<string>("");
   const [type, setType] = useState<"EXPENSE" | "INCOME">("EXPENSE");
-  const [accounts, setAccounts] = useState<AccountItem[]>(DEFAULT_ACCOUNTS);
+  const [accounts, setAccounts] = useState<AccountItem[]>([]);
   const [categories, setCategories] = useState<Record<"EXPENSE" | "INCOME", CategoryItem[]>>(DEFAULT_CATEGORIES);
-  const [accountId, setAccountId] = useState<string>(DEFAULT_ACCOUNTS[0].id);
-  const [categoryId, setCategoryId] = useState<string>(DEFAULT_CATEGORIES.EXPENSE[0].id);
+  const [accountId, setAccountId] = useState<string>("");
+  const [categoryId, setCategoryId] = useState<string>("");
   const [note, setNote] = useState<string>("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);

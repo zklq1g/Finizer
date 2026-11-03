@@ -12,12 +12,6 @@ interface AccountItem {
   balance: number;
 }
 
-const DEFAULT_ACCOUNTS: AccountItem[] = [
-  { id: "acc-1", name: "Main Cash Drawer", balance: 18500 },
-  { id: "acc-2", name: "PhonePe UPI", balance: 42000 },
-  { id: "acc-3", name: "HDFC Bank Account", balance: 150000 },
-];
-
 interface NewOrderSheetProps {
   isOpen: boolean;
   onClose: () => void;
@@ -32,8 +26,8 @@ export default function NewOrderSheet({ isOpen, onClose, onSuccess }: NewOrderSh
   const [totalAmount, setTotalAmount] = useState("");
   const [purchaseDetails, setPurchaseDetails] = useState("");
   const [expectedDate, setExpectedDate] = useState("");
-  const [accounts, setAccounts] = useState<AccountItem[]>(DEFAULT_ACCOUNTS);
-  const [accountId, setAccountId] = useState<string>(DEFAULT_ACCOUNTS[0].id);
+  const [accounts, setAccounts] = useState<AccountItem[]>([]);
+  const [accountId, setAccountId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 

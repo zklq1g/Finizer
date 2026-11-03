@@ -12,11 +12,6 @@ interface AccountItem {
   balance: number;
 }
 
-const DEFAULT_ACCOUNTS: AccountItem[] = [
-  { id: "acc-1", name: "Main Cash Drawer", balance: 18500 },
-  { id: "acc-2", name: "PhonePe UPI", balance: 42000 },
-  { id: "acc-3", name: "HDFC Bank Account", balance: 150000 },
-];
 
 export interface PayBalanceResult {
   orderId: string;
@@ -45,8 +40,8 @@ export default function PayBalanceSheet({
 }: PayBalanceSheetProps) {
   const { actor } = useActor();
   const [paymentAmount, setPaymentAmount] = useState("");
-  const [accounts, setAccounts] = useState<AccountItem[]>(DEFAULT_ACCOUNTS);
-  const [accountId, setAccountId] = useState<string>(DEFAULT_ACCOUNTS[0].id);
+  const [accounts, setAccounts] = useState<AccountItem[]>([]);
+  const [accountId, setAccountId] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);

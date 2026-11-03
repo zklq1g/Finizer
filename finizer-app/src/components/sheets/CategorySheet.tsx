@@ -11,19 +11,30 @@ interface Props {
   onSuccess: () => void;
 }
 
+const CATEGORY_TYPES = [
+  { value: "OPERATING_EXPENSE", label: "Operating Expense (Rent, Utilities, Tea)" },
+  { value: "CAPITAL_EXPENSE", label: "Capital Expense (Equipment, Interiors)" },
+  { value: "WITHDRAWAL", label: "Withdrawal (Partner Payout, Cash Drawer)" },
+  { value: "INCOME", label: "Income (Sales Revenue, Collections)" },
+] as const;
+
+type CategoryTypeValue = typeof CATEGORY_TYPES[number]["value"];
+
 export default function CategorySheet({ isOpen, onClose, category, onSuccess }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState("");
-  const [type, setType] = useState<"income" | "expense">("expense");
+  const [type, setType] = useState<CategoryTypeValue>("OPERATING_EXPENSE");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (category) {
       setName(category.name);
-      setType(category.type === "INCOME" ? "income" : "expense");
+      // Map existing category type to the select value
+      const matchedType = CATEGORY_TYPES.find((t) => t.value === category.type);
+      setType(matchedType ? matchedType.value : "OPERATING_EXPENSE");
     } else {
       setName("");
-      setType("expense");
+      setType("OPERATING_EXPENSE");
     }
     setErrorMsg(null);
   }, [category, isOpen]);
@@ -128,11 +139,14 @@ export default function CategorySheet({ isOpen, onClose, category, onSuccess }: 
             </label>
             <select
               value={type}
-              onChange={(e) => setType(e.target.value as "income" | "expense")}
+              onChange={(e) => setType(e.target.value as CategoryTypeValue)}
               className="w-full px-4 py-3 rounded-2xl border border-[#F2F0F5] bg-[#F9F9FB] text-sm font-semibold text-[#120D26] focus:outline-hidden focus:border-[#5F33E1] focus:bg-white transition-colors"
             >
-              <option value="expense">Expense (Operating / CapEx / Withdrawals)</option>
-              <option value="income">Income (Counter Revenue / Wholesale Collections)</option>
+              {CATEGORY_TYPES.map((ct) => (
+                <option key={ct.value} value={ct.value}>
+                  {ct.label}
+                </option>
+              ))}
             </select>
           </div>
         </form>

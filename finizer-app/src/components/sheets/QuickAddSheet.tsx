@@ -71,6 +71,7 @@ export default function QuickAddSheet({
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const amountRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -157,12 +158,13 @@ export default function QuickAddSheet({
 
     setReceiptFile(file);
     setIsUploading(true);
+    setUploadError(null);
     try {
       const url = await uploadReceipt(file);
       setReceiptUrl(url);
     } catch (err) {
       console.error("Failed to upload receipt:", err);
-      alert("Failed to upload receipt image. Please try again.");
+      setUploadError("Failed to upload receipt image. Please try again.");
       setReceiptFile(null);
       setReceiptUrl(null);
     } finally {
@@ -409,6 +411,13 @@ export default function QuickAddSheet({
                 </span>
               )}
             </button>
+
+            {/* Upload error banner */}
+            {uploadError && (
+              <div className="p-2.5 bg-[#FEF2F2] border border-[#FEE2E2] rounded-xl text-xs text-[#DC2626] font-bold">
+                {uploadError}
+              </div>
+            )}
           </div>
 
         </form>

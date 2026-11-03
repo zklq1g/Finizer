@@ -14,7 +14,6 @@ import {
   EditIcon,
   TrashIcon,
 } from "../icons";
-import MonthEndAllocator from "./MonthEndAllocator";
 import AccountSheet from "../sheets/AccountSheet";
 import CategorySheet from "../sheets/CategorySheet";
 import {
@@ -36,46 +35,14 @@ interface SettingsTabProps {
   onOpenMonthEnd?: () => void;
 }
 
-const FALLBACK_TRANSACTIONS: Transaction[] = [
-  {
-    id: "tx-101",
-    account_id: "acc-1",
-    category_id: "cat-1",
-    amount: 14200,
-    type: "INCOME",
-    date: "2026-10-20",
-    description: "Counter Sales (Cash + UPI)",
-    vendor_gst_number: null,
-    receipt_image_url: null,
-    is_deleted: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    accounts: { name: "Main Cash Drawer" },
-    categories: { name: "Sales Revenue", type: "INCOME" },
-  },
-  {
-    id: "tx-102",
-    account_id: "acc-2",
-    category_id: "cat-2",
-    amount: 6500,
-    type: "EXPENSE",
-    date: "2026-10-20",
-    description: "Packaging cartons from Balaji Traders",
-    vendor_gst_number: "27AABCU9603R1ZM",
-    receipt_image_url: null,
-    is_deleted: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    accounts: { name: "HDFC Bank Account" },
-    categories: { name: "Repairs & Maintenance", type: "OPERATING_EXPENSE" },
-  },
-];
+
 
 export default function SettingsTab({ onOpenActivityLog, onOpenMonthEnd }: SettingsTabProps) {
-  const { actor, setActor, availableActors } = useActor();
+  const { actor, setActor, availableActors, addActor, removeActor } = useActor();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [showAllocator, setShowAllocator] = useState<boolean>(false);
+  const [toastType, setToastType] = useState<"success" | "error">("success");
   const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [newActorName, setNewActorName] = useState<string>("");
 
   // Accounts & Categories CRUD States
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -88,8 +55,9 @@ export default function SettingsTab({ onOpenActivityLog, onOpenMonthEnd }: Setti
   const [categorySheetOpen, setCategorySheetOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
-  const showToast = (msg: string) => {
+  const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToastMessage(msg);
+    setToastType(type);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
@@ -109,28 +77,42 @@ export default function SettingsTab({ onOpenActivityLog, onOpenMonthEnd }: Setti
     fetchCrudData();
   }, []);
 
+  // Confirmation dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
+
   const handleDeleteAccount = async (id: string, name: string) => {
-    if (confirm(`Archive account "${name}"? It will be hidden from new transaction selection.`)) {
-      try {
-        await saveAccount("delete", { id });
-        showToast(`Archived account: ${name}`);
-        fetchCrudData();
-      } catch {
-        showToast("Failed to archive account.");
-      }
-    }
+    setConfirmDialog({
+      message: `Archive account "${name}"? It will be hidden from new transaction selection.`,
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await saveAccount("delete", { id });
+          showToast(`Archived account: ${name}`);
+          fetchCrudData();
+        } catch {
+          showToast("Failed to archive account.", "error");
+        }
+      },
+    });
   };
 
   const handleDeleteCategory = async (id: string, name: string) => {
-    if (confirm(`Archive category "${name}"? Existing transactions will retain their historical links.`)) {
-      try {
-        await saveCategory("delete", { id });
-        showToast(`Archived category: ${name}`);
-        fetchCrudData();
-      } catch {
-        showToast("Failed to archive category.");
-      }
-    }
+    setConfirmDialog({
+      message: `Archive category "${name}"? Existing transactions will retain their historical links.`,
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await saveCategory("delete", { id });
+          showToast(`Archived category: ${name}`);
+          fetchCrudData();
+        } catch {
+          showToast("Failed to archive category.", "error");
+        }
+      },
+    });
   };
 
   const handleExportCA = async () => {
@@ -142,18 +124,19 @@ export default function SettingsTab({ onOpenActivityLog, onOpenMonthEnd }: Setti
       try {
         transactions = await api.getTransactions(500);
       } catch (err) {
-        console.warn("Could not fetch remote transactions, using local fallback:", err);
+        console.warn("Could not fetch remote transactions:", err);
       }
 
       if (!transactions || transactions.length === 0) {
-        transactions = FALLBACK_TRANSACTIONS;
+        showToast("No transactions found to export.", "error");
+        return;
       }
 
       exportTransactionsToCSV(transactions, "Finizer_CA_Ledger");
       showToast(`Exported ${transactions.length} entries for CA with UTF-8 BOM.`);
     } catch (err: unknown) {
       console.error("Export failed:", err);
-      showToast("Failed to generate CA export.");
+      showToast("Failed to generate CA export.", "error");
     } finally {
       setIsExporting(false);
     }
@@ -163,18 +146,6 @@ export default function SettingsTab({ onOpenActivityLog, onOpenMonthEnd }: Setti
     window.print();
   };
 
-  if (showAllocator) {
-    return (
-      <MonthEndAllocator
-        onBack={() => setShowAllocator(false)}
-        onSuccess={(summary) => {
-          setShowAllocator(false);
-          showToast(`Month-end closed: ${summary.month} locked.`);
-        }}
-      />
-    );
-  }
-
   return (
     <div className="flex flex-col gap-6 animate-fade-in pb-12">
       <div>
@@ -183,7 +154,11 @@ export default function SettingsTab({ onOpenActivityLog, onOpenMonthEnd }: Setti
       </div>
 
       {toastMessage && (
-        <div className="bg-[#DCFCE7] text-[#16A34A] text-xs font-bold p-3.5 rounded-2xl border border-[#BBF7D0] animate-fade-in shadow-xs">
+        <div className={`text-xs font-bold p-3.5 rounded-2xl border animate-fade-in shadow-xs ${
+          toastType === "error"
+            ? "bg-[#FEF2F2] text-[#DC2626] border-[#FEE2E2]"
+            : "bg-[#DCFCE7] text-[#16A34A] border-[#BBF7D0]"
+        }`}>
           {toastMessage}
         </div>
       )}
@@ -204,21 +179,64 @@ export default function SettingsTab({ onOpenActivityLog, onOpenMonthEnd }: Setti
         </p>
         <div className="flex flex-wrap gap-2 pt-1">
           {availableActors.map((a) => (
-            <button
-              key={a}
-              onClick={() => {
-                setActor(a);
-                showToast(`Switched active profile to ${a}`);
-              }}
-              className={`text-xs px-3 py-1.5 rounded-xl font-bold transition-all ${
-                actor === a
-                  ? "bg-[#5F33E1] text-white shadow-xs shadow-[#5F33E1]/20"
-                  : "bg-[#F5F2FF] text-[#120D26] hover:bg-[#EDE8FB]"
-              }`}
-            >
-              {a}
-            </button>
+            <div key={a} className="relative group">
+              <button
+                onClick={() => {
+                  setActor(a);
+                  showToast(`Switched active profile to ${a}`);
+                }}
+                className={`text-xs px-3 py-1.5 rounded-xl font-bold transition-all ${
+                  actor === a
+                    ? "bg-[#5F33E1] text-white shadow-xs shadow-[#5F33E1]/20"
+                    : "bg-[#F5F2FF] text-[#120D26] hover:bg-[#EDE8FB]"
+                }`}
+              >
+                {a}
+              </button>
+              {availableActors.length > 1 && actor !== a && (
+                <button
+                  onClick={() => {
+                    removeActor(a);
+                    showToast(`Removed profile: ${a}`);
+                  }}
+                  className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-gray-200 hover:bg-red-100 text-gray-500 hover:text-red-600 rounded-full text-[8px] font-black hidden group-hover:flex items-center justify-center transition-colors"
+                  title={`Remove ${a}`}
+                >
+                  ×
+                </button>
+              )}
+            </div>
           ))}
+        </div>
+
+        {/* Add new partner */}
+        <div className="flex gap-2 pt-1">
+          <input
+            value={newActorName}
+            onChange={(e) => setNewActorName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && newActorName.trim()) {
+                addActor(newActorName.trim());
+                showToast(`Added profile: ${newActorName.trim()}`);
+                setNewActorName("");
+              }
+            }}
+            className="flex-1 px-3 py-1.5 rounded-xl border border-[#F2F0F5] bg-[#F9F9FB] text-xs font-semibold text-[#120D26] placeholder-[#99969E] focus:outline-hidden focus:border-[#5F33E1] transition-colors"
+            placeholder="Add partner name..."
+          />
+          <button
+            onClick={() => {
+              if (newActorName.trim()) {
+                addActor(newActorName.trim());
+                showToast(`Added profile: ${newActorName.trim()}`);
+                setNewActorName("");
+              }
+            }}
+            disabled={!newActorName.trim()}
+            className="px-3 py-1.5 rounded-xl text-xs font-bold text-[#5F33E1] bg-[#EDE8FB] hover:bg-[#DDD6F5] disabled:opacity-40 transition-colors"
+          >
+            + Add
+          </button>
         </div>
       </div>
 
@@ -230,7 +248,7 @@ export default function SettingsTab({ onOpenActivityLog, onOpenMonthEnd }: Setti
 
         {/* Month-End Profit Allocator */}
         <button
-          onClick={() => (onOpenMonthEnd ? onOpenMonthEnd() : setShowAllocator(true))}
+          onClick={() => onOpenMonthEnd?.()}
           className="w-full bg-white rounded-2xl p-4 flex items-center justify-between border border-[#F2F0F5] hover:border-gray-300 transition-all text-left shadow-xs group"
         >
           <div className="flex items-center gap-3.5">
@@ -462,6 +480,33 @@ export default function SettingsTab({ onOpenActivityLog, onOpenMonthEnd }: Setti
           showToast(editingCategory ? "Category updated successfully" : "New category created");
         }}
       />
+
+      {/* Custom Confirmation Dialog (replaces native confirm()) */}
+      {confirmDialog && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-6">
+          <div
+            className="absolute inset-0 bg-black/45 backdrop-blur-[2px] animate-fade-in"
+            onClick={() => setConfirmDialog(null)}
+          />
+          <div className="relative bg-white rounded-2xl p-5 max-w-sm w-full shadow-2xl animate-slide-up z-10">
+            <p className="text-sm font-semibold text-[#120D26] mb-4">{confirmDialog.message}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDialog(null)}
+                className="flex-1 py-3 rounded-xl border border-[#F2F0F5] text-sm font-bold text-[#99969E] hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDialog.onConfirm}
+                className="flex-1 py-3 rounded-xl bg-[#DC2626] text-white text-sm font-bold hover:bg-red-700 transition-colors"
+              >
+                Archive
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

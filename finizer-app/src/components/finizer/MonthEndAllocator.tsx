@@ -27,11 +27,7 @@ interface MonthEndAllocatorProps {
   targetMonth?: Date;
 }
 
-const DEFAULT_ACCOUNTS: AccountItem[] = [
-  { id: "acc-1", name: "Main Cash Drawer", balance: 120000 },
-  { id: "acc-2", name: "HDFC Bank Account", balance: 650000 },
-  { id: "acc-3", name: "PhonePe UPI", balance: 42000 },
-];
+const DEFAULT_ACCOUNTS: AccountItem[] = [];
 
 export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: MonthEndAllocatorProps) {
   const { actor } = useActor();
@@ -57,6 +53,17 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
 
         const data = await getFinancialMetrics(startStr, endStr);
         setMetrics(data);
+
+        // Check if this month is already closed
+        try {
+          const closures = await api.getMonthlyClosures();
+          const alreadyClosed = closures.some(
+            (c) => c.month === m + 1 && c.year === y && c.status === "LOCKED"
+          );
+          setMonthAlreadyClosed(alreadyClosed);
+        } catch {
+          // Non-critical — proceed without guard
+        }
       } catch (err) {
         console.error("Failed to load metrics for month closure:", err);
       } finally {
@@ -71,7 +78,8 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
   const netProfit = monthlyIncome - monthlyExpense;
   const isLossMonth = netProfit < 0;
 
-  const [accounts, setAccounts] = useState<AccountItem[]>(DEFAULT_ACCOUNTS);
+  const [accounts, setAccounts] = useState<AccountItem[]>([]);
+  const [loadingAccounts, setLoadingAccounts] = useState<boolean>(true);
   const [mode, setMode] = useState<"AMOUNT" | "PERCENT">("AMOUNT");
 
   // Allocation input states
@@ -79,14 +87,16 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
   const [salaries, setSalaries] = useState<string>("");
   const [reinvestment, setReinvestment] = useState<string>("");
   const [payout, setPayout] = useState<string>("");
-  const [payoutAccountId, setPayoutAccountId] = useState<string>(DEFAULT_ACCOUNTS[1].id);
+  const [payoutAccountId, setPayoutAccountId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [monthAlreadyClosed, setMonthAlreadyClosed] = useState<boolean>(false);
 
-  // Load real accounts from Supabase if available
+  // Load real accounts from Supabase
   useEffect(() => {
     async function loadAccounts() {
       try {
+        setLoadingAccounts(true);
         const liveAccounts = await api.getAccounts();
         if (liveAccounts && liveAccounts.length > 0) {
           const mapped = liveAccounts.map((a) => ({
@@ -98,7 +108,9 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
           setPayoutAccountId(mapped[0].id);
         }
       } catch (err) {
-        console.warn("Could not fetch remote accounts, using defaults:", err);
+        console.warn("Could not fetch remote accounts:", err);
+      } finally {
+        setLoadingAccounts(false);
       }
     }
     loadAccounts();
@@ -151,6 +163,9 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
     !isSubmitting &&
     !isOverAllocated &&
     !isOverdraft &&
+    !monthAlreadyClosed &&
+    !loadingAccounts &&
+    accounts.length > 0 &&
     (isLossMonth || totalAllocated > 0);
 
   const handleSubmit = async () => {
@@ -272,9 +287,15 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
             </div>
           )}
 
+          {monthAlreadyClosed && (
+            <div className="p-3 mb-4 w-full bg-[#FEF3C7] border border-[#FDE68A] rounded-2xl text-xs text-[#92400E] font-bold">
+              This month has already been closed and locked.
+            </div>
+          )}
+
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting}
+            disabled={isSubmitting || monthAlreadyClosed}
             className="w-full py-4 rounded-2xl bg-[#5F33E1] text-white font-bold text-sm shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-[#5029C9]"
           >
             {isSubmitting ? (
@@ -322,6 +343,13 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
           <div className="p-3.5 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-600 font-bold flex items-center gap-2">
             <AlertTriangleIcon className="w-4 h-4 shrink-0 text-red-600" />
             <span>{errorMessage}</span>
+          </div>
+        )}
+
+        {monthAlreadyClosed && (
+          <div className="p-3.5 bg-[#FEF3C7] border border-[#FDE68A] rounded-2xl text-xs text-[#92400E] font-bold flex items-center gap-2">
+            <AlertTriangleIcon className="w-4 h-4 shrink-0 text-[#D97706]" />
+            <span>{currentMonth} {currentYear} has already been closed and locked. You cannot close it again.</span>
           </div>
         )}
 

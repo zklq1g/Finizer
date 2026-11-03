@@ -36,60 +36,16 @@ interface ActivityLogModalProps {
   onClose: () => void;
 }
 
-// FALLBACK MOCK DATA: Simulating real forensic theft & edit scenarios
-const FORENSIC_LOGS: ForensicLog[] = [
-  {
-    id: "log-1",
-    action: "EDITED",
-    timestamp: new Date(Date.now() - 1000 * 60 * 18).toISOString(), // 18m ago
-    actor: "Rahul (Partner)",
-    old_data: { amount: 500, account_name: "Cash Drawer", category_name: "Petrol / Fuel", date: "2026-10-19" },
-    new_data: { amount: 350, account_name: "Cash Drawer", category_name: "Petrol / Fuel", date: "2026-10-19" },
-  },
-  {
-    // SNEAKY ACCOUNT SWAP: Amount identical, but money redirected
-    id: "log-2",
-    action: "EDITED",
-    timestamp: new Date(Date.now() - 1000 * 60 * 105).toISOString(), // ~1.7h ago
-    actor: "Amit (Cashier)",
-    old_data: { amount: 5000, account_name: "Cash Drawer", category_name: "Inventory Purchase", date: "2026-10-19" },
-    new_data: { amount: 5000, account_name: "HDFC Bank", category_name: "Partner Withdrawal", date: "2026-10-19" },
-  },
-  {
-    // SNEAKY BACKDATING: Date changed to yesterday to mask today's cash shortage
-    id: "log-3",
-    action: "EDITED",
-    timestamp: new Date(Date.now() - 1000 * 60 * 320).toISOString(),
-    actor: "Amit (Cashier)",
-    old_data: { amount: 1500, account_name: "Cash Drawer", category_name: "Staff Advance", date: "2026-10-19" },
-    new_data: { amount: 1500, account_name: "Cash Drawer", category_name: "Staff Advance", date: "2026-10-15" },
-  },
-  {
-    id: "log-4",
-    action: "SOFT_DELETED",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-    actor: "Rahul (Partner)",
-    old_data: { amount: 1200, account_name: "Shop UPI", category_name: "Tea & Snacks", date: "2026-10-18" },
-    new_data: null,
-  },
-  {
-    id: "log-5",
-    action: "CREATED",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
-    actor: "System / POS",
-    old_data: null,
-    new_data: { amount: 15400, account_name: "Cash Drawer", category_name: "Counter Sales", date: "2026-10-18" },
-  },
-];
-
 export default function ActivityLogModal({ isOpen, onClose }: ActivityLogModalProps) {
   const [filter, setFilter] = useState<"ALL" | "SUSPICIOUS">("ALL");
-  const [logs, setLogs] = useState<ForensicLog[]>(FORENSIC_LOGS);
+  const [logs, setLogs] = useState<ForensicLog[]>([]);
   const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const handleExportAuditPDF = async () => {
     try {
       setIsExporting(true);
+      setExportError(null);
       const end = new Date();
       const start = new Date();
       start.setDate(start.getDate() - 30);
@@ -100,7 +56,7 @@ export default function ActivityLogModal({ isOpen, onClose }: ActivityLogModalPr
       await generateAuditPDF(entries, startStr, endStr);
     } catch (err) {
       console.error("Failed to generate audit PDF:", err);
-      alert("Failed to generate forensic audit PDF. Please try again.");
+      setExportError("Failed to generate forensic audit PDF. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -394,7 +350,12 @@ export default function ActivityLogModal({ isOpen, onClose }: ActivityLogModalPr
         </div>
 
         {/* FOOTER: Export Audit Proof */}
-        <div className="p-4 border-t border-[#F2F0F5] bg-white shrink-0">
+        <div className="p-4 border-t border-[#F2F0F5] bg-white shrink-0 space-y-2">
+          {exportError && (
+            <div className="p-3 bg-[#FEF2F2] border border-[#FEE2E2] rounded-2xl text-xs text-[#DC2626] font-bold">
+              {exportError}
+            </div>
+          )}
           <button
             onClick={handleExportAuditPDF}
             disabled={isExporting}

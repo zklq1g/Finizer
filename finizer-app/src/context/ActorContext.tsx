@@ -7,24 +7,37 @@ interface ActorContextType {
   actor: string;
   setActor: (name: string) => void;
   availableActors: string[];
+  addActor: (name: string) => void;
+  removeActor: (name: string) => void;
 }
 
-const DEFAULT_ACTORS = ['Store Owner', 'Partner Ramesh', 'Store Manager Suresh'];
+const DEFAULT_ACTORS = ['Store Owner'];
+const ACTORS_STORAGE_KEY = 'finizer_actors';
 
 const ActorContext = createContext<ActorContextType>({
   actor: 'Store Owner',
   setActor: () => {},
   availableActors: DEFAULT_ACTORS,
+  addActor: () => {},
+  removeActor: () => {},
 });
 
 export function ActorProvider({ children }: { children: React.ReactNode }) {
   const [actor, setActorState] = useState<string>('Store Owner');
+  const [availableActors, setAvailableActors] = useState<string[]>(DEFAULT_ACTORS);
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('finizer_active_actor');
-      if (saved) {
-        setActorState(saved);
+      const savedActor = localStorage.getItem('finizer_active_actor');
+      if (savedActor) {
+        setActorState(savedActor);
+      }
+      const savedActors = localStorage.getItem(ACTORS_STORAGE_KEY);
+      if (savedActors) {
+        const parsed = JSON.parse(savedActors);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setAvailableActors(parsed);
+        }
       }
     } catch {
       // localStorage may fail in restricted environments
@@ -40,8 +53,34 @@ export function ActorProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const addActor = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed || availableActors.includes(trimmed)) return;
+    const updated = [...availableActors, trimmed];
+    setAvailableActors(updated);
+    try {
+      localStorage.setItem(ACTORS_STORAGE_KEY, JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+  };
+
+  const removeActor = (name: string) => {
+    if (availableActors.length <= 1) return; // Keep at least one
+    const updated = availableActors.filter((a) => a !== name);
+    setAvailableActors(updated);
+    if (actor === name) {
+      setActor(updated[0]);
+    }
+    try {
+      localStorage.setItem(ACTORS_STORAGE_KEY, JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+  };
+
   return (
-    <ActorContext.Provider value={{ actor, setActor, availableActors: DEFAULT_ACTORS }}>
+    <ActorContext.Provider value={{ actor, setActor, availableActors, addActor, removeActor }}>
       {children}
     </ActorContext.Provider>
   );

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
 import "./globals.css";
 import { ActorProvider } from "@/context/ActorContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -41,11 +42,26 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${manrope.variable} h-full antialiased`}>
-      <body className={`min-h-full flex flex-col ${manrope.className}`}>
-        <ActorProvider>
-          {children}
-        </ActorProvider>
+    <html lang="en" suppressHydrationWarning className={`${manrope.variable} h-full antialiased`}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const theme = localStorage.getItem('finizer_theme_preference');
+                const isDark = theme === 'dark' || ((!theme || theme === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (isDark) document.documentElement.classList.add('dark');
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
+      <body className={`min-h-full flex flex-col ${manrope.className} bg-[#F8F9FA] dark:bg-[#0C0A14] text-[#120D26] dark:text-[#F4F3F8] transition-colors duration-200`}>
+        <ThemeProvider>
+          <ActorProvider>
+            {children}
+          </ActorProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

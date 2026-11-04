@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { ArrowDownCueIcon } from "../icons";
 
 interface EmptyStateProps {
   icon: React.ReactNode;
@@ -29,19 +30,7 @@ export default function EmptyState({
       {/* Visual cue pointing down to the FAB */}
       <div className="flex flex-col items-center text-[#5F33E1] animate-bounce">
         <span className="text-xs font-bold tracking-wide mb-1.5">{cueText}</span>
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <polyline points="19 12 12 19 5 12"></polyline>
-        </svg>
+        <ArrowDownCueIcon className="w-5 h-5" />
       </div>
     </div>
   );

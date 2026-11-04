@@ -9,6 +9,7 @@ import {
   ShieldTickIcon,
   AddIcon,
   ArrowDownIcon,
+  LockIcon,
 } from "../components/icons";
 
 // Finizer Core Tabs
@@ -142,7 +143,7 @@ export default function FinizerApp() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F0F2F5] flex flex-col items-center justify-start lg:justify-start p-0 overflow-y-auto lg:overflow-hidden">
+    <div className="min-h-screen bg-[#F0F2F5] dark:bg-[#0C0A14] flex flex-col items-center justify-start lg:justify-start p-0 overflow-y-auto lg:overflow-hidden transition-colors duration-200">
       {/* Admin Lock Screen */}
       {!adminUnlocked && <AdminLockScreen onUnlock={handleAdminUnlock} />}
 
@@ -151,12 +152,12 @@ export default function FinizerApp() {
       {/* MOBILE  LAYOUT (<lg): original phone-style single column */}
       {/* ══════════════════════════════════════════════════════════ */}
 
-      <div className="relative w-full h-[100dvh] lg:h-screen bg-[#F8F9FA] flex flex-col lg:flex-row overflow-hidden">
+      <div className="relative w-full h-[100dvh] lg:h-screen bg-[#F8F9FA] dark:bg-[#0C0A14] flex flex-col lg:flex-row overflow-hidden transition-colors duration-200">
 
         {/* ── DESKTOP SIDEBAR (hidden on mobile) ─────────── */}
-        <aside className="hidden lg:flex lg:flex-col lg:w-[240px] xl:w-[260px] bg-white border-r border-[#F2F0F5] shrink-0 h-full">
+        <aside className="hidden lg:flex lg:flex-col lg:w-[240px] xl:w-[260px] bg-white dark:bg-[#161324] border-r border-[#F2F0F5] dark:border-[#28233D] shrink-0 h-full transition-colors duration-200">
           {/* Sidebar Header / Brand */}
-          <div className="px-5 py-5 border-b border-[#F2F0F5]">
+          <div className="px-5 py-5 border-b border-[#F2F0F5] dark:border-[#28233D]">
             <div className="flex items-center gap-2.5 cursor-pointer">
               <Image
                 src="/icon.png"
@@ -167,8 +168,8 @@ export default function FinizerApp() {
                 priority
               />
               <div>
-                <h1 className="text-sm font-black text-[#120D26] tracking-tight leading-tight">Main Store</h1>
-                <span className="text-[10px] font-medium text-gray-400">{lastSyncTime}</span>
+                <h1 className="text-sm font-black text-[#120D26] dark:text-[#F4F3F8] tracking-tight leading-tight">Main Store</h1>
+                <span className="text-[10px] font-medium text-gray-400 dark:text-[#8C879B]">{lastSyncTime}</span>
               </div>
             </div>
           </div>
@@ -184,11 +185,11 @@ export default function FinizerApp() {
                   onClick={() => setActiveTab(item.id)}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                     isActive
-                      ? "bg-[#EDE8FB] text-[#5F33E1]"
-                      : "text-[#99969E] hover:bg-[#F8F9FA] hover:text-[#120D26]"
+                      ? "bg-[#EDE8FB] dark:bg-[#29204E] text-[#5F33E1] dark:text-[#9F87EF]"
+                      : "text-[#99969E] dark:text-[#8C879B] hover:bg-[#F8F9FA] dark:hover:bg-[#1F1B30] hover:text-[#120D26] dark:hover:text-[#F4F3F8]"
                   }`}
                 >
-                  <Icon className={`w-5 h-5 ${isActive ? "text-[#5F33E1]" : "text-[#99969E]"}`} />
+                  <Icon className={`w-5 h-5 ${isActive ? "text-[#5F33E1] dark:text-[#9F87EF]" : "text-[#99969E] dark:text-[#8C879B]"}`} />
                   <span>{item.label}</span>
                 </button>
               );
@@ -207,15 +208,13 @@ export default function FinizerApp() {
           </div>
 
           {/* Sidebar Footer Actions */}
-          <div className="px-3 pb-5 border-t border-[#F2F0F5] pt-3 flex items-center justify-between">
+          <div className="px-3 pb-5 border-t border-[#F2F0F5] dark:border-[#28233D] pt-3 flex items-center justify-between">
             <button
               onClick={handleAdminLock}
               title="Lock Admin"
-              className="w-9 h-9 rounded-xl bg-[#F5F2FF] hover:bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1] transition-colors"
+              className="w-9 h-9 rounded-xl bg-[#F5F2FF] dark:bg-[#1F1B30] hover:bg-[#EDE8FB] dark:hover:bg-[#29204E] flex items-center justify-center text-[#5F33E1] dark:text-[#9F87EF] transition-colors"
             >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
-              </svg>
+              <LockIcon className="w-4 h-4" />
             </button>
             <button
               onClick={() => {
@@ -223,11 +222,11 @@ export default function FinizerApp() {
                 setHasRecentEditBadge(false);
               }}
               title="Partner Trust Activity Log"
-              className="relative w-9 h-9 rounded-xl bg-[#F5F2FF] hover:bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1] transition-colors"
+              className="relative w-9 h-9 rounded-xl bg-[#F5F2FF] dark:bg-[#1F1B30] hover:bg-[#EDE8FB] dark:hover:bg-[#29204E] flex items-center justify-center text-[#5F33E1] dark:text-[#9F87EF] transition-colors"
             >
-              <ShieldTickIcon className="w-5 h-5 text-[#5F33E1]" />
+              <ShieldTickIcon className="w-5 h-5 text-[#5F33E1] dark:text-[#9F87EF]" />
               {hasRecentEditBadge && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#5F33E1] rounded-full ring-2 ring-white" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#5F33E1] rounded-full ring-2 ring-white dark:ring-[#161324]" />
               )}
             </button>
           </div>
@@ -237,7 +236,7 @@ export default function FinizerApp() {
         <div className="flex-1 flex flex-col min-w-0 h-full">
 
           {/* ── 1. MOBILE TOP BAR (hidden on desktop) ────── */}
-          <header className="lg:hidden bg-white px-5 py-3.5 flex items-center justify-between border-b border-[#F2F0F5] sticky top-0 z-30 shrink-0">
+          <header className="lg:hidden bg-white dark:bg-[#161324] px-5 py-3.5 flex items-center justify-between border-b border-[#F2F0F5] dark:border-[#28233D] sticky top-0 z-30 shrink-0 transition-colors duration-200">
             {/* Left: Store Selector with App Icon */}
             <div className="flex items-center gap-2 cursor-pointer">
               <Image
@@ -249,13 +248,13 @@ export default function FinizerApp() {
                 priority
               />
               <div className="flex items-center gap-1.5">
-                <h1 className="text-base font-black text-[#120D26] tracking-tight">Main Store</h1>
-                <ArrowDownIcon className="w-3.5 h-3.5 text-gray-400" />
+                <h1 className="text-base font-black text-[#120D26] dark:text-[#F4F3F8] tracking-tight">Main Store</h1>
+                <ArrowDownIcon className="w-3.5 h-3.5 text-gray-400 dark:text-[#8C879B]" />
               </div>
             </div>
 
             {/* Center: Human Sync Status */}
-            <span className="text-[11px] font-medium text-gray-400">
+            <span className="text-[11px] font-medium text-gray-400 dark:text-[#8C879B]">
               {lastSyncTime}
             </span>
 
@@ -264,11 +263,9 @@ export default function FinizerApp() {
               <button
                 onClick={handleAdminLock}
                 title="Lock Admin"
-                className="w-9 h-9 rounded-xl bg-[#F5F2FF] hover:bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1] transition-colors"
+                className="w-9 h-9 rounded-xl bg-[#F5F2FF] dark:bg-[#1F1B30] hover:bg-[#EDE8FB] dark:hover:bg-[#29204E] flex items-center justify-center text-[#5F33E1] dark:text-[#9F87EF] transition-colors"
               >
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                  <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
-                </svg>
+                <LockIcon className="w-4 h-4" />
               </button>
               <button
                 onClick={() => {
@@ -276,21 +273,21 @@ export default function FinizerApp() {
                   setHasRecentEditBadge(false);
                 }}
                 title="Partner Trust Activity Log"
-                className="relative w-9 h-9 rounded-xl bg-[#F5F2FF] hover:bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1] transition-colors"
+                className="relative w-9 h-9 rounded-xl bg-[#F5F2FF] dark:bg-[#1F1B30] hover:bg-[#EDE8FB] dark:hover:bg-[#29204E] flex items-center justify-center text-[#5F33E1] dark:text-[#9F87EF] transition-colors"
               >
-                <ShieldTickIcon className="w-5 h-5 text-[#5F33E1]" />
+                <ShieldTickIcon className="w-5 h-5 text-[#5F33E1] dark:text-[#9F87EF]" />
                 {hasRecentEditBadge && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#5F33E1] rounded-full ring-2 ring-white" />
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#5F33E1] rounded-full ring-2 ring-white dark:ring-[#161324]" />
                 )}
               </button>
             </div>
           </header>
 
           {/* ── DESKTOP TOP BAR (hidden on mobile) ────────── */}
-          <header className="hidden lg:flex bg-white px-8 py-4 items-center justify-between border-b border-[#F2F0F5] shrink-0">
+          <header className="hidden lg:flex bg-white dark:bg-[#161324] px-8 py-4 items-center justify-between border-b border-[#F2F0F5] dark:border-[#28233D] shrink-0 transition-colors duration-200">
             <div>
-              <h2 className="text-xl font-black text-[#120D26] tracking-tight capitalize">{activeTab}</h2>
-              <p className="text-xs text-[#99969E] font-medium">
+              <h2 className="text-xl font-black text-[#120D26] dark:text-[#F4F3F8] tracking-tight capitalize">{activeTab}</h2>
+              <p className="text-xs text-[#99969E] dark:text-[#8C879B] font-medium">
                 {activeTab === "home" && "Business overview & recent activity"}
                 {activeTab === "entries" && "Digital store diary"}
                 {activeTab === "deliveries" && "Vendor orders, payments & arrivals"}
@@ -336,14 +333,14 @@ export default function FinizerApp() {
         {/* ── 3. MOBILE FAB (hidden on desktop) ──────────── */}
         <button
           onClick={() => setIsQuickAddOpen(true)}
-          className="lg:hidden absolute bottom-5 left-1/2 -translate-x-1/2 w-14 h-14 bg-[#5F33E1] text-white rounded-full shadow-lg shadow-[#5F33E1]/40 border-4 border-white flex items-center justify-center z-40 active:scale-95 transition-transform"
+          className="lg:hidden absolute bottom-5 left-1/2 -translate-x-1/2 w-14 h-14 bg-[#5F33E1] text-white rounded-full shadow-lg shadow-[#5F33E1]/40 border-4 border-white dark:border-[#161324] flex items-center justify-center z-40 active:scale-95 transition-transform"
           aria-label="Quick Add Transaction"
         >
           <AddIcon className="w-7 h-7 text-white" />
         </button>
 
         {/* ── 4. MOBILE BOTTOM NAVIGATION (hidden on desktop) ── */}
-        <nav className="lg:hidden absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-[#F2F0F5] px-4 py-2.5 flex items-center justify-around z-30 shrink-0">
+        <nav className="lg:hidden absolute bottom-0 left-0 right-0 bg-white/95 dark:bg-[#161324]/95 backdrop-blur-md border-t border-[#F2F0F5] dark:border-[#28233D] px-4 py-2.5 flex items-center justify-around z-30 shrink-0 transition-colors duration-200">
           {navItems.map((item, idx) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -356,11 +353,11 @@ export default function FinizerApp() {
                 <button
                   onClick={() => setActiveTab(item.id)}
                   className={`flex flex-col items-center justify-center w-14 py-1 transition-colors ${
-                    isActive ? "text-[#5F33E1]" : "text-[#99969E] hover:text-[#120D26]"
+                    isActive ? "text-[#5F33E1] dark:text-[#9F87EF]" : "text-[#99969E] dark:text-[#8C879B] hover:text-[#120D26] dark:hover:text-[#F4F3F8]"
                   }`}
                 >
-                  <Icon className={`w-5 h-5 ${isActive ? "text-[#5F33E1]" : "text-[#99969E]"}`} />
-                  <span className={`text-[10px] mt-1 font-semibold ${isActive ? "text-[#5F33E1]" : "text-[#99969E]"}`}>
+                  <Icon className={`w-5 h-5 ${isActive ? "text-[#5F33E1] dark:text-[#9F87EF]" : "text-[#99969E] dark:text-[#8C879B]"}`} />
+                  <span className={`text-[10px] mt-1 font-semibold ${isActive ? "text-[#5F33E1] dark:text-[#9F87EF]" : "text-[#99969E] dark:text-[#8C879B]"}`}>
                     {item.label}
                   </span>
                 </button>

@@ -344,6 +344,86 @@ export const PackageCheckIcon: React.FC<{ className?: string }> = ({ className }
   </svg>
 );
 
+/** Cash / Banknote — cash drawer, money display (Vuesax Bulk) */
+export const CashIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M17 3.5H7c-3 0-5 1.5-5 5v7c0 3.5 2 5 5 5h10c3 0 5-1.5 5-5v-7c0-3.5-2-5-5-5zm-5 12.75c-2.07 0-3.75-1.68-3.75-3.75S9.93 8.75 12 8.75s3.75 1.68 3.75 3.75-1.68 3.75-3.75 3.75z" opacity="0.4"/>
+    <path d="M12 10.25a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5zM5.5 9.75c-.41 0-.75-.34-.75-.75V8c0-.41.34-.75.75-.75s.75.34.75.75v1c0 .41-.34.75-.75.75zM5.5 17c-.41 0-.75-.34-.75-.75V15.5c0-.41.34-.75.75-.75s.75.34.75.75v.75c0 .41-.34.75-.75.75zM18.5 9.75c-.41 0-.75-.34-.75-.75V8c0-.41.34-.75.75-.75s.75.34.75.75v1c0 .41-.34.75-.75.75zM18.5 17c-.41 0-.75-.34-.75-.75V15.5c0-.41.34-.75.75-.75s.75.34.75.75v.75c0 .41-.34.75-.75.75z"/>
+  </svg>
+);
+
+/** Arrow Up — upward direction indicator (Vuesax Bold) */
+export const ArrowUpIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    {/* Bulk: circle background */}
+    <path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10 10-4.49 10-10S17.51 2 12 2z" opacity="0.4" />
+    {/* Detail: upward arrow */}
+    <path d="M12 16.08V8.92M8.47 11.46L12 7.92l3.53 3.54" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+  </svg>
+);
+
+/** Backspace — delete/erase key (Vuesax Bold) */
+export const BackspaceIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    {/* Bulk: key shape */}
+    <path d="M21 6.5H9.83a2 2 0 0 0-1.42.59l-5.3 5.3a.99.99 0 0 0 0 1.41l5.3 5.3A2 2 0 0 0 9.83 19.7H21a2 2 0 0 0 2-2v-9.2a2 2 0 0 0-2-2z" opacity="0.4" />
+    {/* Detail: X strokes */}
+    <path d="M17.71 15.29a.75.75 0 0 1-1.06 0L14.5 13.14l-2.15 2.15a.75.75 0 1 1-1.06-1.06l2.15-2.15-2.15-2.15a.75.75 0 1 1 1.06-1.06l2.15 2.15 2.15-2.15a.75.75 0 1 1 1.06 1.06L15.56 12l2.15 2.15a.75.75 0 0 1 0 1.14z" />
+  </svg>
+);
+
+/** Fingerprint — biometric authentication (Vuesax Bulk) */
+export const FingerprintIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    {/* Bulk: fingerprint area background */}
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" opacity="0.4" />
+    {/* Detail: fingerprint ridges */}
+    <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4M14 13.12c0 2.38 0 6.38-1 8.88M17.29 21.02c.12-.6.43-2.3.5-3.02M2 12a10 10 0 0 1 18-6M2 17c1 .5 2.2 1 3 1M20 12a8 8 0 0 0-3.54-6.61M5 15.5A15.48 15.48 0 0 0 8 22M8.5 9A6 6 0 0 1 18 12c0 .47-.05.93-.14 1.38" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+  </svg>
+);
+
+/** Arrow Down Cue — visual scroll/point cue (Vuesax Bulk) */
+export const ArrowDownCueIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    {/* Bulk: circle background */}
+    <path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10 10-4.49 10-10S17.51 2 12 2z" opacity="0.4" />
+    {/* Detail: downward arrow */}
+    <path d="M12 7.92v7.16M15.53 12.54L12 16.08l-3.53-3.54" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+  </svg>
+);
+
+/** Sun — light mode (Vuesax Bulk) */
+export const SunIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    {/* Bulk: sun disc */}
+    <circle cx="12" cy="12" r="5" opacity="0.4" />
+    {/* Detail: rays and inner ring */}
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
+  </svg>
+);
+
+/** Moon — dark mode (Vuesax Bulk) */
+export const MoonIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    {/* Bulk: circular aura */}
+    <circle cx="12" cy="12" r="9" opacity="0.25" />
+    {/* Detail: crescent */}
+    <path d="M21.06 14.85A9 9 0 1 1 9.15 2.94 7 7 0 0 0 21.06 14.85z" />
+  </svg>
+);
+
+/** Monitor / System — auto system theme (Vuesax Bulk) */
+export const MonitorIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    {/* Bulk: screen body */}
+    <rect x="2" y="3" width="20" height="14" rx="3" opacity="0.4" />
+    {/* Detail: bezel + stand */}
+    <path d="M7 21h10M12 17v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
+    <rect x="4" y="5" width="16" height="10" rx="1.5" />
+  </svg>
+);
+
 /** Spinner / Loader — asynchronous submission states */
 export const SpinnerIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={`animate-spin ${className || "w-5 h-5"}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

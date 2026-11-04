@@ -5,40 +5,14 @@ import { api } from "@/services/api";
 import { formatINR } from "@/utils/format";
 import type { Account, Category, Transaction } from "@/types";
 import DrawerLockScreen from "@/components/lock/DrawerLockScreen";
-
-// ── Inline icons (keep this page self-contained for kiosk mode) ──────────
-
-const CashIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M17 3.5H7c-3 0-5 1.5-5 5v7c0 3.5 2 5 5 5h10c3 0 5-1.5 5-5v-7c0-3.5-2-5-5-5zm-5 12.75c-2.07 0-3.75-1.68-3.75-3.75S9.93 8.75 12 8.75s3.75 1.68 3.75 3.75-1.68 3.75-3.75 3.75z" opacity="0.4"/>
-    <path d="M12 10.25a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5zM5.5 9.75c-.41 0-.75-.34-.75-.75V8c0-.41.34-.75.75-.75s.75.34.75.75v1c0 .41-.34.75-.75.75zM5.5 17c-.41 0-.75-.34-.75-.75V15.5c0-.41.34-.75.75-.75s.75.34.75.75v.75c0 .41-.34.75-.75.75zM18.5 9.75c-.41 0-.75-.34-.75-.75V8c0-.41.34-.75.75-.75s.75.34.75.75v1c0 .41-.34.75-.75.75zM18.5 17c-.41 0-.75-.34-.75-.75V15.5c0-.41.34-.75.75-.75s.75.34.75.75v.75c0 .41-.34.75-.75.75z"/>
-  </svg>
-);
-
-const CheckIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10 10-4.49 10-10S17.51 2 12 2zm4.78 7.7l-5.67 5.67a.75.75 0 0 1-1.06 0l-2.83-2.83a.754.754 0 0 1 0-1.06c.29-.29.77-.29 1.06 0l2.3 2.3 5.14-5.14c.29-.29.77-.29 1.06 0 .29.29.29.76 0 1.06z"/>
-  </svg>
-);
-
-const SpinnerIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className={className}>
-    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-  </svg>
-);
-
-const ArrowUpIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M18.07 9.57L12 3.5 5.93 9.57a.75.75 0 0 0 1.06 1.06L11.25 6.38V20a.75.75 0 0 0 1.5 0V6.38l4.26 4.25a.75.75 0 0 0 1.06-1.06z"/>
-  </svg>
-);
-
-const TrashIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M20.37 8.91l-1.39 12.19A2 2 0 0 1 17 23H7a2 2 0 0 1-1.98-1.9L3.63 8.91h16.74z" opacity="0.4" />
-    <path d="M2 7.25h20c.41 0 .75-.34.75-.75s-.34-.75-.75-.75h-5.5V5c0-1.1-.9-2-2-2h-5c-1.1 0-2 .9-2 2v.75H2c-.41 0-.75.34-.75.75s.34.75.75.75zM9.5 5c0-.28.22-.5.5-.5h4c.28 0 .5.22.5.5v.75h-5V5z" />
-  </svg>
-);
+import {
+  CashIcon,
+  CheckIcon,
+  SpinnerIcon,
+  ArrowUpIcon,
+  TrashIcon,
+  LockIcon,
+} from "@/components/icons";
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -278,7 +252,7 @@ export default function CashDrawerPage() {
 
   // ── Render ────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-[family-name:var(--font-manrope)]">
+    <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#0C0A14] flex flex-col font-[family-name:var(--font-manrope)] text-[#120D26] dark:text-[#F4F3F8] transition-colors duration-200">
       {/* Drawer Lock Screen */}
       {!drawerUnlocked && <DrawerLockScreen onUnlock={handleDrawerUnlock} />}
 
@@ -295,9 +269,7 @@ export default function CashDrawerPage() {
             title="Lock Kiosk"
             className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 active:bg-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-colors"
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
-              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
-            </svg>
+            <LockIcon className="w-3.5 h-3.5" />
             Lock
           </button>
         </div>
@@ -314,8 +286,8 @@ export default function CashDrawerPage() {
 
       {/* Success Flash */}
       {successFlash && (
-        <div className="mx-5 mt-4 bg-[#DCFCE7] text-[#16A34A] text-sm font-bold p-3.5 rounded-2xl border border-[#BBF7D0] animate-fade-in flex items-center gap-2 shadow-sm">
-          <CheckIcon className="w-5 h-5 text-[#16A34A] shrink-0" />
+        <div className="mx-5 mt-4 bg-[#DCFCE7] dark:bg-emerald-950/40 text-[#16A34A] dark:text-emerald-400 text-sm font-bold p-3.5 rounded-2xl border border-[#BBF7D0] dark:border-emerald-800 animate-fade-in flex items-center gap-2 shadow-sm">
+          <CheckIcon className="w-5 h-5 text-[#16A34A] dark:text-emerald-400 shrink-0" />
           <span>{successFlash}</span>
         </div>
       )}
@@ -323,18 +295,18 @@ export default function CashDrawerPage() {
       {/* Form */}
       <form onSubmit={handleSubmit} className="px-5 pt-5 space-y-4 flex-shrink-0">
         {errorMessage && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-600 font-medium">
+          <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-2xl text-xs text-red-600 dark:text-red-400 font-medium">
             {errorMessage}
           </div>
         )}
 
         {/* Amount */}
-        <div className="bg-white rounded-3xl p-5 border border-[#F2F0F5] shadow-sm focus-within:border-[#5F33E1] transition-all">
-          <label className="block text-[11px] font-bold text-[#99969E] uppercase tracking-wider mb-1">
+        <div className="bg-white dark:bg-[#161324] rounded-3xl p-5 border border-[#F2F0F5] dark:border-[#28233D] shadow-sm focus-within:border-[#5F33E1] transition-all">
+          <label className="block text-[11px] font-bold text-[#99969E] dark:text-[#8C879B] uppercase tracking-wider mb-1">
             Amount Taken Out
           </label>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-[#120D26] select-none">₹</span>
+            <span className="text-3xl font-extrabold text-[#120D26] dark:text-[#F4F3F8] select-none">₹</span>
             <input
               ref={amountRef}
               type="text"
@@ -345,7 +317,7 @@ export default function CashDrawerPage() {
               onChange={handleAmountChange}
               disabled={isSubmitting}
               autoFocus
-              className="w-full text-4xl font-black bg-transparent outline-none tracking-tight text-[#120D26] placeholder-[#D1D5DB]"
+              className="w-full text-4xl font-black bg-transparent outline-none tracking-tight text-[#120D26] dark:text-[#F4F3F8] placeholder-[#D1D5DB] dark:placeholder-[#4A4560]"
             />
           </div>
         </div>
@@ -358,7 +330,7 @@ export default function CashDrawerPage() {
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             disabled={isSubmitting}
-            className="w-full px-4 py-3.5 rounded-2xl border border-[#F2F0F5] bg-white text-sm text-[#120D26] placeholder-[#99969E] focus:outline-hidden focus:border-[#5F33E1] transition-colors shadow-sm"
+            className="w-full px-4 py-3.5 rounded-2xl border border-[#F2F0F5] dark:border-[#28233D] bg-white dark:bg-[#161324] text-sm text-[#120D26] dark:text-[#F4F3F8] placeholder-[#99969E] dark:placeholder-[#8C879B] focus:outline-hidden focus:border-[#5F33E1] transition-colors shadow-sm"
           />
           <input
             type="text"
@@ -367,7 +339,7 @@ export default function CashDrawerPage() {
             onChange={(e) => setWhoTook(e.target.value)}
             disabled={isSubmitting}
             required
-            className="w-full px-4 py-3.5 rounded-2xl border border-[#F2F0F5] bg-white text-sm text-[#120D26] placeholder-[#99969E] focus:outline-hidden focus:border-[#5F33E1] transition-colors shadow-sm"
+            className="w-full px-4 py-3.5 rounded-2xl border border-[#F2F0F5] dark:border-[#28233D] bg-white dark:bg-[#161324] text-sm text-[#120D26] dark:text-[#F4F3F8] placeholder-[#99969E] dark:placeholder-[#8C879B] focus:outline-hidden focus:border-[#5F33E1] transition-colors shadow-sm"
           />
         </div>
 
@@ -393,11 +365,11 @@ export default function CashDrawerPage() {
 
       {/* Divider */}
       <div className="px-5 pt-6 pb-3 flex items-center justify-between">
-        <h2 className="text-xs font-black text-[#120D26] uppercase tracking-wider">
+        <h2 className="text-xs font-black text-[#120D26] dark:text-[#F4F3F8] uppercase tracking-wider">
           Today&apos;s Cash Out
         </h2>
         {todayEntries.length > 0 && (
-          <span className="text-xs font-extrabold text-[#EF4444]">
+          <span className="text-xs font-extrabold text-[#EF4444] dark:text-[#F87171]">
             Total: {formatINR(totalOut)}
           </span>
         )}
@@ -406,36 +378,36 @@ export default function CashDrawerPage() {
       {/* Today's entries list */}
       <div className="px-5 pb-10 flex-1 overflow-y-auto space-y-2.5">
         {todayEntries.length === 0 ? (
-          <div className="bg-white rounded-2xl p-8 text-center border border-[#F2F0F5]">
-            <CashIcon className="w-7 h-7 text-[#5F33E1] mx-auto mb-2 opacity-50" />
-            <p className="text-sm font-bold text-[#99969E]">No cash taken out today</p>
-            <p className="text-[11px] text-[#C4C1CC] mt-1">Entries will appear here as they&apos;re logged</p>
+          <div className="bg-white dark:bg-[#161324] rounded-2xl p-8 text-center border border-[#F2F0F5] dark:border-[#28233D] transition-colors">
+            <CashIcon className="w-7 h-7 text-[#5F33E1] dark:text-[#9F87EF] mx-auto mb-2 opacity-50" />
+            <p className="text-sm font-bold text-[#99969E] dark:text-[#8C879B]">No cash taken out today</p>
+            <p className="text-[11px] text-[#C4C1CC] dark:text-gray-600 mt-1">Entries will appear here as they&apos;re logged</p>
           </div>
         ) : (
           todayEntries.map((entry) => (
             <div
               key={entry.id}
-              className="bg-white rounded-2xl px-4 py-3.5 border border-[#F2F0F5] flex items-center gap-3 shadow-sm"
+              className="bg-white dark:bg-[#161324] rounded-2xl px-4 py-3.5 border border-[#F2F0F5] dark:border-[#28233D] flex items-center gap-3 shadow-sm transition-colors"
             >
-              <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
-                <ArrowUpIcon className="w-4 h-4 text-[#EF4444] rotate-180" />
+              <div className="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-950/40 flex items-center justify-center shrink-0">
+                <ArrowUpIcon className="w-4 h-4 text-[#EF4444] dark:text-red-400 rotate-180" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-[#120D26] truncate">
+                <p className="text-sm font-bold text-[#120D26] dark:text-[#F4F3F8] truncate">
                   {entry.description || "Cash withdrawal"}
                 </p>
-                <p className="text-[10px] text-[#99969E] mt-0.5 font-medium">
+                <p className="text-[10px] text-[#99969E] dark:text-[#8C879B] mt-0.5 font-medium">
                   {formatTime(entry.created_at)}
                 </p>
               </div>
-              <span className="text-sm font-extrabold text-[#EF4444] shrink-0">
+              <span className="text-sm font-extrabold text-[#EF4444] dark:text-[#F87171] shrink-0">
                 −{formatINR(Number(entry.amount))}
               </span>
               <button
                 type="button"
                 onClick={() => setCancelingEntry(entry)}
                 title="Void this withdrawal"
-                className="p-2 rounded-xl text-gray-400 hover:text-[#DC2626] hover:bg-red-50 transition-colors shrink-0 active:scale-95"
+                className="p-2 rounded-xl text-gray-400 dark:text-gray-500 hover:text-[#DC2626] dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors shrink-0 active:scale-95"
               >
                 <TrashIcon className="w-4 h-4" />
               </button>
@@ -448,19 +420,19 @@ export default function CashDrawerPage() {
       {cancelingEntry && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-5">
           <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-[2px] animate-fade-in"
+            className="absolute inset-0 bg-black/60 backdrop-blur-[2px] animate-fade-in"
             onClick={() => !isCanceling && setCancelingEntry(null)}
           />
-          <div className="relative bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-slide-up z-10 border border-[#F2F0F5]">
-            <div className="w-12 h-12 rounded-2xl bg-red-50 text-[#DC2626] flex items-center justify-center mb-4 mx-auto">
-              <TrashIcon className="w-6 h-6 text-[#DC2626]" />
+          <div className="relative bg-white dark:bg-[#1F1B30] rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-slide-up z-10 border border-[#F2F0F5] dark:border-[#28233D]">
+            <div className="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-950/40 text-[#DC2626] dark:text-red-400 flex items-center justify-center mb-4 mx-auto">
+              <TrashIcon className="w-6 h-6 text-[#DC2626] dark:text-red-400" />
             </div>
-            <h3 className="text-base font-black text-[#120D26] text-center mb-1">
+            <h3 className="text-base font-black text-[#120D26] dark:text-[#F4F3F8] text-center mb-1">
               Void Cash Withdrawal?
             </h3>
-            <p className="text-xs text-[#99969E] text-center mb-5 leading-relaxed">
+            <p className="text-xs text-[#99969E] dark:text-[#8C879B] text-center mb-5 leading-relaxed">
               Cancel withdrawal of{" "}
-              <span className="font-extrabold text-[#120D26]">
+              <span className="font-extrabold text-[#120D26] dark:text-[#F4F3F8]">
                 {formatINR(Number(cancelingEntry.amount))}
               </span>
               {cancelingEntry.description ? ` (${cancelingEntry.description})` : ""}? The cash will be returned to the drawer balance.
@@ -471,7 +443,7 @@ export default function CashDrawerPage() {
                 type="button"
                 disabled={isCanceling}
                 onClick={() => setCancelingEntry(null)}
-                className="flex-1 py-3.5 rounded-2xl border border-[#F2F0F5] text-xs font-bold text-[#99969E] hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="flex-1 py-3.5 rounded-2xl border border-[#F2F0F5] dark:border-[#28233D] text-xs font-bold text-[#99969E] dark:text-[#8C879B] hover:bg-gray-50 dark:hover:bg-[#28233D] transition-colors disabled:opacity-50"
               >
                 Keep Entry
               </button>

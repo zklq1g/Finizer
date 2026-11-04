@@ -217,8 +217,8 @@ export default function DeliveriesTab() {
       {/* Top Header */}
       <div className="flex items-center justify-between">
         <div className="lg:hidden">
-          <h1 className="text-xl font-bold tracking-tight text-[#120D26]">Deliveries</h1>
-          <p className="text-xs text-[#7B7882] font-medium">Vendor orders, payments & arrivals</p>
+          <h1 className="text-xl font-bold tracking-tight text-[#120D26] dark:text-[#F4F3F8]">Deliveries</h1>
+          <p className="text-xs text-[#7B7882] dark:text-[#8C879B] font-medium">Vendor orders, payments & arrivals</p>
         </div>
         <button
           onClick={() => setIsNewOrderSheetOpen(true)}
@@ -231,25 +231,25 @@ export default function DeliveriesTab() {
 
       {/* Feedback Toast */}
       {feedbackToast && (
-        <div className="bg-emerald-50 text-emerald-800 text-xs font-medium p-3 rounded-xl border border-emerald-200 animate-fade-in flex items-center gap-2 shadow-xs">
-          <CheckIcon className="w-4 h-4 text-emerald-600 shrink-0" />
+        <div className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400 text-xs font-medium p-3 rounded-xl border border-emerald-200 dark:border-emerald-900/50 animate-fade-in flex items-center gap-2 shadow-xs">
+          <CheckIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
           <span>{feedbackToast}</span>
         </div>
       )}
 
       {/* Segmented Filter Control */}
-      <div className="flex bg-[#F2F0F7] p-1 rounded-xl border border-[#E6E3ED] text-xs">
+      <div className="flex bg-[#F2F0F7] dark:bg-[#161324] p-1 rounded-xl border border-[#E6E3ED] dark:border-[#28233D] text-xs transition-colors">
         <button
           onClick={() => setActiveFilter("Waiting")}
           className={`flex-1 py-1.5 px-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 ${
             activeFilter === "Waiting"
-              ? "bg-white text-[#120D26] shadow-xs"
-              : "text-[#7B7882] hover:text-[#120D26]"
+              ? "bg-white dark:bg-[#221C38] text-[#120D26] dark:text-[#F4F3F8] shadow-xs"
+              : "text-[#7B7882] dark:text-[#8C879B] hover:text-[#120D26] dark:hover:text-[#F4F3F8]"
           }`}
         >
           <span>In Transit</span>
           <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-            activeFilter === "Waiting" ? "bg-[#EDE8FB] text-[#5F33E1]" : "bg-[#E6E3ED] text-[#7B7882]"
+            activeFilter === "Waiting" ? "bg-[#EDE8FB] dark:bg-[#29204E] text-[#5F33E1] dark:text-[#9F87EF]" : "bg-[#E6E3ED] dark:bg-[#28233D] text-[#7B7882] dark:text-[#8C879B]"
           }`}>
             {waitingCount}
           </span>
@@ -258,14 +258,14 @@ export default function DeliveriesTab() {
           onClick={() => setActiveFilter("Due")}
           className={`flex-1 py-1.5 px-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 ${
             activeFilter === "Due"
-              ? "bg-white text-[#120D26] shadow-xs"
-              : "text-[#7B7882] hover:text-[#120D26]"
+              ? "bg-white dark:bg-[#221C38] text-[#120D26] dark:text-[#F4F3F8] shadow-xs"
+              : "text-[#7B7882] dark:text-[#8C879B] hover:text-[#120D26] dark:hover:text-[#F4F3F8]"
           }`}
         >
           <span>Payment Due</span>
           {dueCount > 0 && (
             <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-              activeFilter === "Due" ? "bg-amber-100 text-amber-800" : "bg-[#E6E3ED] text-[#7B7882]"
+              activeFilter === "Due" ? "bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300" : "bg-[#E6E3ED] dark:bg-[#28233D] text-[#7B7882] dark:text-[#8C879B]"
             }`}>
               {dueCount}
             </span>
@@ -275,13 +275,13 @@ export default function DeliveriesTab() {
           onClick={() => setActiveFilter("Arrived")}
           className={`flex-1 py-1.5 px-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 ${
             activeFilter === "Arrived"
-              ? "bg-white text-[#120D26] shadow-xs"
-              : "text-[#7B7882] hover:text-[#120D26]"
+              ? "bg-white dark:bg-[#221C38] text-[#120D26] dark:text-[#F4F3F8] shadow-xs"
+              : "text-[#7B7882] dark:text-[#8C879B] hover:text-[#120D26] dark:hover:text-[#F4F3F8]"
           }`}
         >
           <span>Delivered</span>
           <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-            activeFilter === "Arrived" ? "bg-[#EDE8FB] text-[#5F33E1]" : "bg-[#E6E3ED] text-[#7B7882]"
+            activeFilter === "Arrived" ? "bg-[#EDE8FB] dark:bg-[#29204E] text-[#5F33E1] dark:text-[#9F87EF]" : "bg-[#E6E3ED] dark:bg-[#28233D] text-[#7B7882] dark:text-[#8C879B]"
           }`}>
             {arrivedCount}
           </span>
@@ -290,16 +290,16 @@ export default function DeliveriesTab() {
 
       {/* Orders List */}
       {filteredOrders.length === 0 ? (
-        <div className="bg-white rounded-2xl p-8 text-center border border-[#ECE9F1]">
-          <TruckIcon className="w-8 h-8 text-[#9E9BA5] mx-auto mb-2.5 opacity-60" />
-          <p className="text-sm font-semibold text-[#120D26]">
+        <div className="bg-white dark:bg-[#161324] rounded-2xl p-8 text-center border border-[#ECE9F1] dark:border-[#28233D] transition-colors">
+          <TruckIcon className="w-8 h-8 text-[#9E9BA5] dark:text-gray-600 mx-auto mb-2.5 opacity-60" />
+          <p className="text-sm font-semibold text-[#120D26] dark:text-[#F4F3F8]">
             {activeFilter === "Waiting"
               ? "No orders currently in transit"
               : activeFilter === "Due"
               ? "All vendor balances are fully settled"
               : "No delivered orders in this period"}
           </p>
-          <p className="text-xs text-[#7B7882] mt-1">
+          <p className="text-xs text-[#7B7882] dark:text-[#8C879B] mt-1">
             {activeFilter === "Waiting"
               ? "Use + New Order above to record a vendor purchase"
               : "Orders will automatically appear here as status updates"}
@@ -317,36 +317,36 @@ export default function DeliveriesTab() {
             return (
               <div
                 key={order.id}
-                className="bg-white rounded-2xl p-4 border border-[#ECE9F1] shadow-xs hover:border-[#D8D4E2] transition-colors"
+                className="bg-white dark:bg-[#161324] rounded-2xl p-4 border border-[#ECE9F1] dark:border-[#28233D] shadow-xs hover:border-[#D8D4E2] dark:hover:border-[#3D3759] transition-colors"
               >
                 {/* Header: Vendor Name + Status */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-[#120D26] text-sm tracking-tight truncate">
+                      <h3 className="font-bold text-[#120D26] dark:text-[#F4F3F8] text-sm tracking-tight truncate">
                         {order.vendorName}
                       </h3>
                       <span className={`text-[11px] font-semibold shrink-0 ${
                         isComplete
-                          ? "text-[#7B7882]"
+                          ? "text-[#7B7882] dark:text-[#8C879B]"
                           : isPartial
-                          ? "text-blue-600"
-                          : "text-[#5F33E1]"
+                          ? "text-blue-600 dark:text-blue-400"
+                          : "text-[#5F33E1] dark:text-[#9F87EF]"
                       }`}>
                         · {isComplete ? "Delivered" : isPartial ? "Partial" : "In Transit"}
                       </span>
                     </div>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[11px] text-[#7B7882]">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[11px] text-[#7B7882] dark:text-[#8C879B]">
                       {order.vendorLocation && (
                         <span className="flex items-center gap-1">
-                          <MapPinIcon className="w-3 h-3 text-[#9E9BA5]" />
+                          <MapPinIcon className="w-3 h-3 text-[#9E9BA5] dark:text-gray-500" />
                           <span>{order.vendorLocation}</span>
                         </span>
                       )}
                       {order.vendorMobile && (
                         <a
                           href={`tel:${order.vendorMobile.replace(/\s/g, "")}`}
-                          className="flex items-center gap-1 text-[#5F33E1] hover:underline font-medium"
+                          className="flex items-center gap-1 text-[#5F33E1] dark:text-[#9F87EF] hover:underline font-medium"
                         >
                           <PhoneIcon className="w-3 h-3" />
                           <span>{order.vendorMobile}</span>
@@ -358,15 +358,15 @@ export default function DeliveriesTab() {
 
                   {/* Payment status — single subtle indicator */}
                   <span className={`text-xs font-semibold shrink-0 mt-0.5 ${
-                    isFullyPaid ? "text-emerald-600" : "text-amber-700"
+                    isFullyPaid ? "text-emerald-600 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"
                   }`}>
-                    {isFullyPaid ? "✓ Paid" : `${formatINR(vendorDue)} due`}
+                  {isFullyPaid ? <span className="flex items-center gap-0.5"><CheckIcon className="w-3 h-3" /> Paid</span> : `${formatINR(vendorDue)} due`}
                   </span>
                 </div>
 
                 {/* Overdue Alert */}
                 {aging && !isComplete && aging.isOverdue && (
-                  <p className="mt-2 text-[11px] font-medium text-rose-600 flex items-center gap-1">
+                  <p className="mt-2 text-[11px] font-medium text-rose-600 dark:text-rose-400 flex items-center gap-1">
                     <AlertTriangleIcon className="w-3 h-3 shrink-0" />
                     <span>{aging.label}</span>
                   </p>
@@ -374,53 +374,53 @@ export default function DeliveriesTab() {
 
                 {/* Items Description */}
                 {order.purchaseDetails && (
-                  <div className="mt-3 text-xs text-[#4A4752] bg-[#F9F8FB] border border-[#F0EDF5] rounded-xl px-3 py-2 flex items-start gap-2">
-                    <BoxIcon className="w-3.5 h-3.5 text-[#7B7882] shrink-0 mt-0.5" />
+                  <div className="mt-3 text-xs text-[#4A4752] dark:text-gray-300 bg-[#F9F8FB] dark:bg-[#1F1B30] border border-[#F0EDF5] dark:border-[#28233D] rounded-xl px-3 py-2 flex items-start gap-2">
+                    <BoxIcon className="w-3.5 h-3.5 text-[#7B7882] dark:text-gray-500 shrink-0 mt-0.5" />
                     <span className="line-clamp-2">{order.purchaseDetails}</span>
                   </div>
                 )}
 
                 {/* Financial Ledger Details */}
-                <div className="mt-3 pt-3 border-t border-[#F2F0F5] grid grid-cols-3 gap-2 text-xs">
+                <div className="mt-3 pt-3 border-t border-[#F2F0F5] dark:border-[#28233D] grid grid-cols-3 gap-2 text-xs">
                   <div>
-                    <span className="text-[10px] text-[#7B7882] font-medium block">Total Bill</span>
-                    <span className="font-bold text-[#120D26]">{formatINR(order.totalOrderAmount)}</span>
+                    <span className="text-[10px] text-[#7B7882] dark:text-[#8C879B] font-medium block">Total Bill</span>
+                    <span className="font-bold text-[#120D26] dark:text-[#F4F3F8]">{formatINR(order.totalOrderAmount)}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-[#7B7882] font-medium block">Amount Paid</span>
-                    <span className="font-semibold text-emerald-700">{formatINR(order.amountPaid)}</span>
+                    <span className="text-[10px] text-[#7B7882] dark:text-[#8C879B] font-medium block">Amount Paid</span>
+                    <span className="font-semibold text-emerald-700 dark:text-[#4ADE80]">{formatINR(order.amountPaid)}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-[#7B7882] font-medium block">
+                    <span className="text-[10px] text-[#7B7882] dark:text-[#8C879B] font-medium block">
                       {isFullyPaid ? "Transport Freight" : "Balance Due"}
                     </span>
                     {isFullyPaid ? (
-                      <span className="font-medium text-[#4A4752]">
+                      <span className="font-medium text-[#4A4752] dark:text-gray-300">
                         {order.transportCharges > 0 ? formatINR(order.transportCharges) : "—"}
                       </span>
                     ) : (
-                      <span className="font-bold text-amber-800">{formatINR(vendorDue)}</span>
+                      <span className="font-bold text-amber-800 dark:text-[#FBBF24]">{formatINR(vendorDue)}</span>
                     )}
                   </div>
                 </div>
 
                 {/* Delivery Date note if delivered */}
                 {order.arrivalDate && (
-                  <p className="mt-2 text-[11px] text-[#7B7882]">
-                    Delivered on <strong className="text-[#120D26]">{formatDate(order.arrivalDate)}</strong>
+                  <p className="mt-2 text-[11px] text-[#7B7882] dark:text-[#8C879B]">
+                    Delivered on <strong className="text-[#120D26] dark:text-[#F4F3F8]">{formatDate(order.arrivalDate)}</strong>
                     {order.transportCharges > 0 && ` · Transport freight ${formatINR(order.transportCharges)}`}
                   </p>
                 )}
 
                 {/* Action Bar */}
                 {(!isFullyPaid || !isComplete) && (
-                  <div className="mt-3.5 pt-3 border-t border-[#F2F0F5] flex gap-2">
+                  <div className="mt-3.5 pt-3 border-t border-[#F2F0F5] dark:border-[#28233D] flex gap-2">
                     {!isFullyPaid && (
                       <button
                         onClick={() => handleOpenPayBalance(order)}
-                        className="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300/80 font-semibold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-[0.99]"
+                        className="flex-1 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-300/80 dark:border-amber-800/60 font-semibold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-[0.99]"
                       >
-                        <BanknoteIcon className="w-3.5 h-3.5 text-amber-800" />
+                        <BanknoteIcon className="w-3.5 h-3.5 text-amber-800 dark:text-amber-400" />
                         <span>Pay {formatINR(vendorDue)}</span>
                       </button>
                     )}

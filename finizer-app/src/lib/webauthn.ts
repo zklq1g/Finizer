@@ -34,6 +34,38 @@ function randomBytes(length = 32): Uint8Array {
 
 // ── Feature detection ─────────────────────────────────────────────────────────
 
+export const ADMIN_PASSKEY_KEY = "finizer_admin_passkey";
+export const DRAWER_PASSKEY_KEY = "finizer_drawer_passkey";
+export const ADMIN_BIOMETRIC_PROMPTED_KEY = "finizer_admin_biometric_prompted";
+export const DRAWER_BIOMETRIC_PROMPTED_KEY = "finizer_drawer_biometric_prompted";
+
+export function hasPromptedBiometric(storageKey: string): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(storageKey) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function markBiometricPrompted(storageKey: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(storageKey, "true");
+  } catch {
+    // ignore – storage may be unavailable
+  }
+}
+
+export function resetBiometricPrompted(storageKey: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(storageKey);
+  } catch {
+    // ignore
+  }
+}
+
 export function isWebAuthnSupported(): boolean {
   return (
     typeof window !== "undefined" &&
@@ -136,9 +168,14 @@ export async function registerPasskey(
 
 /**
  * Triggers a biometric assertion using the stored credential.
+ * Accepts optional timeout (defaults to 60s, or 15s for auto-launch) and abort signal.
  * Returns true if the user verified successfully, false otherwise.
  */
-export async function authenticatePasskey(storageKey: string): Promise<boolean> {
+export async function authenticatePasskey(
+  storageKey: string,
+  timeoutMs: number = 60_000,
+  signal?: AbortSignal
+): Promise<boolean> {
   if (!isWebAuthnSupported()) return false;
 
   const credId = localStorage.getItem(storageKey);
@@ -158,14 +195,19 @@ export async function authenticatePasskey(storageKey: string): Promise<boolean> 
           },
         ],
         userVerification: "required",
-        timeout: 60_000,
+        timeout: timeoutMs,
       },
+      signal,
     });
 
     // Browser confirmed the biometric matched — we trust it.
     return !!assertion;
   } catch (err) {
-    if (err instanceof Error && err.name !== "NotAllowedError") {
+    if (
+      err instanceof Error &&
+      err.name !== "NotAllowedError" &&
+      err.name !== "AbortError"
+    ) {
       console.warn("[webauthn] Authentication error:", err);
     }
     return false;

@@ -198,21 +198,21 @@ export default function QuickAddSheet({
       />
 
       {/* Sheet Container: Flex column ensures header/footer stay visible while middle scrolls */}
-      <div className="relative w-full max-w-md lg:max-w-lg bg-white rounded-t-[32px] lg:rounded-[24px] shadow-2xl animate-slide-up lg:animate-fade-in max-h-[92%] lg:max-h-[85vh] flex flex-col z-10 overflow-hidden">
+      <div className="relative w-full max-w-md lg:max-w-lg bg-white dark:bg-[#161324] rounded-t-[32px] lg:rounded-[24px] shadow-2xl animate-slide-up lg:animate-fade-in max-h-[92%] lg:max-h-[85vh] flex flex-col z-10 overflow-hidden border border-transparent dark:border-[#28233D] transition-colors">
         
         {/* 1. HEADER (Fixed Top) */}
-        <div className="flex flex-col items-center pt-3 pb-3 px-5 border-b border-[#F2F0F5] shrink-0 bg-white">
-          <div className="w-10 h-1 bg-[#F2F0F5] rounded-full mb-2" />
+        <div className="flex flex-col items-center pt-3 pb-3 px-5 border-b border-[#F2F0F5] dark:border-[#28233D] shrink-0 bg-white dark:bg-[#161324] transition-colors">
+          <div className="w-10 h-1 bg-[#F2F0F5] dark:bg-[#28233D] rounded-full mb-2" />
           <div className="w-full flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-bold tracking-widest text-[#99969E] uppercase">
+              <span className="text-[10px] font-bold tracking-widest text-[#99969E] dark:text-[#8C879B] uppercase">
                 Quick Action
               </span>
-              <h2 className="text-lg font-black text-[#120D26]">Record Entry</h2>
+              <h2 className="text-lg font-black text-[#120D26] dark:text-[#F4F3F8]">Record Entry</h2>
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800"
+              className="w-8 h-8 rounded-full bg-gray-100 dark:bg-[#28233D] flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
             >
               <CloseIcon className="w-4 h-4" />
             </button>
@@ -223,14 +223,14 @@ export default function QuickAddSheet({
         <form id="quick-add-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar-hide">
           
           {/* A. MASSIVE AMOUNT INPUT */}
-          <div className="bg-[#F8F9FA] rounded-2xl p-4 border border-[#F2F0F5] transition-all focus-within:border-[#5F33E1]">
-            <label className="block text-[11px] font-bold text-[#99969E] uppercase tracking-wider mb-1">
+          <div className="bg-[#F8F9FA] dark:bg-[#1F1B30] rounded-2xl p-4 border border-[#F2F0F5] dark:border-[#28233D] transition-all focus-within:border-[#5F33E1]">
+            <label className="block text-[11px] font-bold text-[#99969E] dark:text-[#8C879B] uppercase tracking-wider mb-1">
               Amount ({type === "EXPENSE" ? "Spent" : "Received"})
             </label>
             <div className="flex items-baseline gap-2">
               <span
                 className={`text-3xl font-extrabold select-none ${
-                  type === "INCOME" ? "text-[#5F33E1]" : "text-[#120D26]"
+                  type === "INCOME" ? "text-[#5F33E1] dark:text-[#4ADE80]" : "text-[#120D26] dark:text-[#F4F3F8]"
                 }`}
               >
                 ₹
@@ -244,21 +244,21 @@ export default function QuickAddSheet({
                 value={amount}
                 onChange={handleAmountChange}
                 className={`w-full text-4xl sm:text-5xl font-black bg-transparent outline-none tracking-tight ${
-                  type === "INCOME" ? "text-[#5F33E1]" : "text-[#120D26]"
+                  type === "INCOME" ? "text-[#5F33E1] dark:text-[#4ADE80]" : "text-[#120D26] dark:text-[#F4F3F8]"
                 }`}
               />
             </div>
           </div>
 
           {/* B. TYPE TOGGLE */}
-          <div className="flex bg-[#F5F2FF] p-1.5 rounded-2xl border border-[#EDE8FB]">
+          <div className="flex bg-[#F5F2FF] dark:bg-[#1F1B30] p-1.5 rounded-2xl border border-[#EDE8FB] dark:border-[#28233D] transition-colors">
             <button
               type="button"
               onClick={() => handleTypeChange("EXPENSE")}
               className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${
                 type === "EXPENSE"
-                  ? "bg-[#120D26] text-white shadow-sm"
-                  : "text-[#99969E] hover:text-[#120D26]"
+                  ? "bg-[#120D26] dark:bg-[#28233D] text-white shadow-sm"
+                  : "text-[#99969E] dark:text-[#8C879B] hover:text-[#120D26] dark:hover:text-[#F4F3F8]"
               }`}
             >
               − Expense
@@ -269,7 +269,7 @@ export default function QuickAddSheet({
               className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${
                 type === "INCOME"
                   ? "bg-[#5F33E1] text-white shadow-sm shadow-[#5F33E1]/25"
-                  : "text-[#99969E] hover:text-[#5F33E1]"
+                  : "text-[#99969E] dark:text-[#8C879B] hover:text-[#5F33E1] dark:hover:text-[#9F87EF]"
               }`}
             >
               + Income
@@ -278,7 +278,7 @@ export default function QuickAddSheet({
 
           {/* C. ACCOUNT CHIPS */}
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-[#120D26]">
+            <label className="block text-xs font-bold text-[#120D26] dark:text-[#F4F3F8]">
               From / To Account
             </label>
             <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
@@ -289,18 +289,18 @@ export default function QuickAddSheet({
                   onClick={() => setAccountId(acc.id)}
                   className={`flex flex-col items-start min-w-[125px] p-3 rounded-2xl border transition-all shrink-0 text-left ${
                     accountId === acc.id
-                      ? "border-[#5F33E1] bg-[#EDE8FB]/60 shadow-sm"
-                      : "border-[#F2F0F5] bg-[#F8F9FA] hover:bg-gray-100"
+                      ? "border-[#5F33E1] bg-[#EDE8FB]/60 dark:bg-[#29204E] shadow-sm"
+                      : "border-[#F2F0F5] dark:border-[#28233D] bg-[#F8F9FA] dark:bg-[#1F1B30] hover:bg-gray-100 dark:hover:bg-[#28233D]"
                   }`}
                 >
                   <span
                     className={`text-xs font-bold truncate max-w-[110px] ${
-                      accountId === acc.id ? "text-[#5F33E1]" : "text-[#120D26]"
+                      accountId === acc.id ? "text-[#5F33E1] dark:text-[#9F87EF]" : "text-[#120D26] dark:text-[#F4F3F8]"
                     }`}
                   >
                     {acc.name}
                   </span>
-                  <span className="text-[10px] text-[#99969E] mt-0.5 font-medium">
+                  <span className="text-[10px] text-[#99969E] dark:text-[#8C879B] mt-0.5 font-medium">
                     ₹{acc.balance.toLocaleString("en-IN")}
                   </span>
                 </button>
@@ -311,10 +311,10 @@ export default function QuickAddSheet({
           {/* D. DYNAMIC CATEGORY CHIPS */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#120D26]">
+              <label className="text-xs font-bold text-[#120D26] dark:text-[#F4F3F8]">
                 Category
               </label>
-              <span className="text-[10px] text-[#99969E]">
+              <span className="text-[10px] text-[#99969E] dark:text-[#8C879B]">
                 {type === "EXPENSE" ? "Expense Buckets" : "Revenue Streams"}
               </span>
             </div>
@@ -327,7 +327,7 @@ export default function QuickAddSheet({
                   className={`px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
                     categoryId === cat.id
                       ? "bg-[#5F33E1] text-white shadow-md shadow-[#5F33E1]/20"
-                      : "bg-[#F8F9FA] text-[#120D26] border border-[#F2F0F5] hover:border-gray-300"
+                      : "bg-[#F8F9FA] dark:bg-[#1F1B30] text-[#120D26] dark:text-[#F4F3F8] border border-[#F2F0F5] dark:border-[#28233D] hover:border-gray-300 dark:hover:border-gray-600"
                   }`}
                 >
                   {cat.name}
@@ -338,13 +338,13 @@ export default function QuickAddSheet({
 
           {/* E. NOTE & CAMERA */}
           <div className="space-y-3 pt-1">
-            <div className="bg-[#F8F9FA] rounded-2xl p-3 border border-[#F2F0F5] focus-within:border-[#5F33E1]">
+            <div className="bg-[#F8F9FA] dark:bg-[#1F1B30] rounded-2xl p-3 border border-[#F2F0F5] dark:border-[#28233D] focus-within:border-[#5F33E1]">
               <input
                 type="text"
                 placeholder="Add a note (Optional, e.g., Packaging cartons)"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                className="w-full text-xs text-[#120D26] font-medium bg-transparent outline-none"
+                className="w-full text-xs text-[#120D26] dark:text-[#F4F3F8] placeholder-[#99969E] dark:placeholder-[#8C879B] font-medium bg-transparent outline-none"
               />
             </div>
 
@@ -372,19 +372,19 @@ export default function QuickAddSheet({
               }}
               className={`w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl border transition-all text-xs font-bold ${
                 isUploading
-                  ? "bg-[#EDE8FB] border-[#5F33E1]/30 text-[#5F33E1]"
+                  ? "bg-[#EDE8FB] dark:bg-[#29204E] border-[#5F33E1]/30 text-[#5F33E1] dark:text-[#9F87EF]"
                   : receiptFile
-                  ? "bg-[#DCFCE7] border-[#BBF7D0] text-[#16A34A]"
-                  : "bg-[#F8F9FA] border-[#F2F0F5] text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                  ? "bg-[#DCFCE7] dark:bg-emerald-950/40 border-[#BBF7D0] dark:border-emerald-800 text-[#16A34A] dark:text-[#4ADE80]"
+                  : "bg-[#F8F9FA] dark:bg-[#1F1B30] border-[#F2F0F5] dark:border-[#28233D] text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200"
               }`}
             >
               {isUploading ? (
-                <span className="flex items-center gap-2 text-[#5F33E1]">
-                  <SpinnerIcon className="w-4 h-4 animate-spin text-[#5F33E1]" /> Uploading bill to vault...
+                <span className="flex items-center gap-2 text-[#5F33E1] dark:text-[#9F87EF]">
+                  <SpinnerIcon className="w-4 h-4 animate-spin text-[#5F33E1] dark:text-[#9F87EF]" /> Uploading bill to vault...
                 </span>
               ) : receiptFile ? (
-                <span className="flex items-center gap-1.5 text-[#16A34A]">
-                  <CheckIcon className="w-3.5 h-3.5 text-[#16A34A]" /> Bill Attached (Tap to remove)
+                <span className="flex items-center gap-1.5 text-[#16A34A] dark:text-[#4ADE80]">
+                  <CheckIcon className="w-3.5 h-3.5 text-[#16A34A] dark:text-[#4ADE80]" /> Bill Attached (Tap to remove)
                 </span>
               ) : (
                 <span className="flex items-center gap-1.5">
@@ -396,7 +396,7 @@ export default function QuickAddSheet({
 
             {/* Upload error banner */}
             {uploadError && (
-              <div className="p-2.5 bg-[#FEF2F2] border border-[#FEE2E2] rounded-xl text-xs text-[#DC2626] font-bold">
+              <div className="p-2.5 bg-[#FEF2F2] dark:bg-red-950/40 border border-[#FEE2E2] dark:border-red-900/50 rounded-xl text-xs text-[#DC2626] dark:text-red-400 font-bold">
                 {uploadError}
               </div>
             )}
@@ -405,7 +405,7 @@ export default function QuickAddSheet({
         </form>
 
         {/* 3. STICKY FOOTER */}
-        <div className="p-5 pt-3 pb-8 border-t border-[#F2F0F5] bg-white shrink-0">
+        <div className="p-5 pt-3 pb-8 border-t border-[#F2F0F5] dark:border-[#28233D] bg-white dark:bg-[#161324] shrink-0 transition-colors">
           <button
             type="submit"
             form="quick-add-form"

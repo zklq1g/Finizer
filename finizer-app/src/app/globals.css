@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-manrope: "Manrope", sans-serif;
   --font-sans: "Manrope", sans-serif;
@@ -15,6 +17,13 @@
   --color-purple-200: #C5B8F6;
   --color-purple-100: #EDE8FB;
   --color-purple-50:  #F5F2FF;
+
+  /* ── Dark Mode Slate / Obsidian Scale ─────────── */
+  --color-dark-canvas:   #0C0A14;
+  --color-dark-surface:  #161324;
+  --color-dark-elevated: #1F1B30;
+  --color-dark-border:   #28233D;
+  --color-dark-border-subtle: #1F1B30;
 
   /* ── Semantic Aliases ─────────────────────────── */
   --color-primary:       var(--color-purple-500);
@@ -52,6 +61,13 @@
 :root {
   --background: #F9F9FB;
   --foreground: #120D26;
+  color-scheme: light;
+}
+
+.dark {
+  --background: #0C0A14;
+  --foreground: #F4F3F8;
+  color-scheme: dark;
 }
 
 body {

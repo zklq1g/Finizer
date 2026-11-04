@@ -79,25 +79,25 @@ export default function CategorySheet({ isOpen, onClose, category, onSuccess }: 
     <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center pointer-events-auto">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px] transition-opacity animate-fade-in"
+        className="absolute inset-0 bg-black/55 backdrop-blur-[2px] transition-opacity animate-fade-in"
         onClick={!isSubmitting ? onClose : undefined}
       />
 
       {/* Sheet Container */}
-      <div className="relative w-full max-w-md lg:max-w-lg bg-white rounded-t-[32px] lg:rounded-[24px] shadow-2xl animate-slide-up lg:animate-fade-in max-h-[92%] lg:max-h-[85vh] flex flex-col z-10 overflow-hidden">
+      <div className="relative w-full max-w-md lg:max-w-lg bg-white dark:bg-[#161324] rounded-t-[32px] lg:rounded-[24px] shadow-2xl animate-slide-up lg:animate-fade-in max-h-[92%] lg:max-h-[85vh] flex flex-col z-10 overflow-hidden border border-transparent dark:border-[#28233D] transition-colors">
         {/* Header */}
-        <div className="flex flex-col items-center pt-3 pb-3 px-5 border-b border-[#F2F0F5] shrink-0 bg-white">
-          <div className="w-10 h-1 bg-[#F2F0F5] rounded-full mb-2" />
+        <div className="flex flex-col items-center pt-3 pb-3 px-5 border-b border-[#F2F0F5] dark:border-[#28233D] shrink-0 bg-white dark:bg-[#161324] transition-colors">
+          <div className="w-10 h-1 bg-[#F2F0F5] dark:bg-[#28233D] rounded-full mb-2" />
           <div className="w-full flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1]">
-                <ReceiptIcon className="w-4 h-4 text-[#5F33E1]" />
+              <div className="w-8 h-8 rounded-xl bg-[#EDE8FB] dark:bg-[#29204E] flex items-center justify-center text-[#5F33E1] dark:text-[#9F87EF]">
+                <ReceiptIcon className="w-4 h-4 text-[#5F33E1] dark:text-[#9F87EF]" />
               </div>
               <div>
-                <span className="text-[10px] font-bold tracking-widest text-[#99969E] uppercase">
+                <span className="text-[10px] font-bold tracking-widest text-[#99969E] dark:text-[#8C879B] uppercase">
                   Category Master
                 </span>
-                <h2 className="text-base font-black text-[#120D26]">
+                <h2 className="text-base font-black text-[#120D26] dark:text-[#F4F3F8]">
                   {category ? "Edit Category" : "New Category"}
                 </h2>
               </div>
@@ -105,7 +105,7 @@ export default function CategorySheet({ isOpen, onClose, category, onSuccess }: 
             <button
               onClick={onClose}
               disabled={isSubmitting}
-              className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800 disabled:opacity-50"
+              className="w-8 h-8 rounded-full bg-gray-100 dark:bg-[#28233D] flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50 transition-colors"
             >
               <CloseIcon className="w-4 h-4" />
             </button>
@@ -115,35 +115,35 @@ export default function CategorySheet({ isOpen, onClose, category, onSuccess }: 
         {/* Form Body */}
         <form id="category-form" onSubmit={handleSubmit} className="p-5 space-y-4">
           {errorMsg && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-600 font-bold">
+            <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-2xl text-xs text-red-600 dark:text-red-400 font-bold">
               {errorMsg}
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-[#120D26] mb-1.5">
+            <label className="block text-xs font-semibold text-[#120D26] dark:text-[#F4F3F8] mb-1.5">
               Category Name
             </label>
             <input
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl border border-[#F2F0F5] bg-[#F9F9FB] text-sm font-semibold text-[#120D26] placeholder-[#99969E] focus:outline-hidden focus:border-[#5F33E1] focus:bg-white transition-colors"
+              className="w-full px-4 py-3 rounded-2xl border border-[#F2F0F5] dark:border-[#28233D] bg-[#F9F9FB] dark:bg-[#1F1B30] text-sm font-semibold text-[#120D26] dark:text-[#F4F3F8] placeholder-[#99969E] dark:placeholder-[#8C879B] focus:outline-hidden focus:border-[#5F33E1] dark:focus:border-[#7C5CE8] focus:bg-white dark:focus:bg-[#1F1B30] transition-colors"
               placeholder="e.g., Tea & Refreshments, Packaging Boxes"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#120D26] mb-1.5">
+            <label className="block text-xs font-semibold text-[#120D26] dark:text-[#F4F3F8] mb-1.5">
               Financial Bucket
             </label>
             <select
               value={type}
               onChange={(e) => setType(e.target.value as CategoryTypeValue)}
-              className="w-full px-4 py-3 rounded-2xl border border-[#F2F0F5] bg-[#F9F9FB] text-sm font-semibold text-[#120D26] focus:outline-hidden focus:border-[#5F33E1] focus:bg-white transition-colors"
+              className="w-full px-4 py-3 rounded-2xl border border-[#F2F0F5] dark:border-[#28233D] bg-[#F9F9FB] dark:bg-[#1F1B30] text-sm font-semibold text-[#120D26] dark:text-[#F4F3F8] focus:outline-hidden focus:border-[#5F33E1] dark:focus:border-[#7C5CE8] focus:bg-white dark:focus:bg-[#1F1B30] transition-colors"
             >
               {CATEGORY_TYPES.map((ct) => (
-                <option key={ct.value} value={ct.value}>
+                <option key={ct.value} value={ct.value} className="dark:bg-[#1F1B30] dark:text-[#F4F3F8]">
                   {ct.label}
                 </option>
               ))}
@@ -152,12 +152,12 @@ export default function CategorySheet({ isOpen, onClose, category, onSuccess }: 
         </form>
 
         {/* Sticky Footer */}
-        <div className="p-5 pt-3 pb-8 border-t border-[#F2F0F5] bg-white shrink-0">
+        <div className="p-5 pt-3 pb-8 border-t border-[#F2F0F5] dark:border-[#28233D] bg-white dark:bg-[#161324] shrink-0 transition-colors">
           <button
             type="submit"
             form="category-form"
             disabled={isSubmitting || !name.trim()}
-            className="w-full py-4 rounded-2xl text-base font-extrabold text-white bg-[#5F33E1] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all shadow-lg shadow-[#5F33E1]/25 hover:bg-[#5029C9] flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-2xl text-base font-extrabold text-white bg-[#5F33E1] dark:bg-[#7C5CE8] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all shadow-lg shadow-[#5F33E1]/25 dark:shadow-[#7C5CE8]/20 hover:bg-[#5029C9] dark:hover:bg-[#6A48D7] flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
               <>

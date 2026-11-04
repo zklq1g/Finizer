@@ -32,7 +32,6 @@ interface AccountItem {
   balance: number;
 }
 
-
 interface LogArrivalSheetProps {
   order: { id: string; vendorName: string; amountPaid: number } | null;
   isOpen: boolean;
@@ -185,23 +184,23 @@ export default function LogArrivalSheet({
     <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center pointer-events-auto">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px] transition-opacity animate-fade-in"
+        className="absolute inset-0 bg-black/55 backdrop-blur-[2px] transition-opacity animate-fade-in"
         onClick={!isSubmitting ? onClose : undefined}
       />
 
       {/* Sheet Container */}
-      <div className="relative w-full max-w-md lg:max-w-lg bg-white rounded-t-[32px] lg:rounded-[24px] shadow-2xl animate-slide-up lg:animate-fade-in max-h-[92%] lg:max-h-[85vh] flex flex-col z-10 overflow-hidden">
+      <div className="relative w-full max-w-md lg:max-w-lg bg-white dark:bg-[#161324] rounded-t-[32px] lg:rounded-[24px] shadow-2xl animate-slide-up lg:animate-fade-in max-h-[92%] lg:max-h-[85vh] flex flex-col z-10 overflow-hidden border border-transparent dark:border-[#28233D] transition-colors">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[#F2F0F5] shrink-0">
+        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[#F2F0F5] dark:border-[#28233D] shrink-0 bg-white dark:bg-[#161324] transition-colors">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#DCFCE7] flex items-center justify-center text-[#16A34A]">
+            <div className="w-10 h-10 rounded-2xl bg-[#DCFCE7] dark:bg-emerald-950/40 flex items-center justify-center text-[#16A34A] dark:text-emerald-400">
               <PackageCheckIcon className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] font-bold tracking-widest text-[#99969E] uppercase">
+              <span className="text-[10px] font-bold tracking-widest text-[#99969E] dark:text-[#8C879B] uppercase">
                 Parcel Arrival
               </span>
-              <h2 className="text-base font-black text-[#120D26]">
+              <h2 className="text-base font-black text-[#120D26] dark:text-[#F4F3F8]">
                 Log Arrival
               </h2>
             </div>
@@ -209,7 +208,7 @@ export default function LogArrivalSheet({
           <button
             onClick={onClose}
             disabled={isSubmitting}
-            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800 disabled:opacity-50"
+            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-[#28233D] flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50 transition-colors"
           >
             <CloseIcon className="w-4 h-4" />
           </button>
@@ -222,31 +221,31 @@ export default function LogArrivalSheet({
           className="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-hide"
         >
           {errorMessage && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-600 font-medium">
+            <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-2xl text-xs text-red-600 dark:text-red-400 font-medium">
               {errorMessage}
             </div>
           )}
 
           {/* Context Banner — which order */}
-          <div className="bg-[#EDE8FB] border border-[#5F33E1]/20 p-4 rounded-2xl flex items-start gap-3">
-            <PackageCheckIcon className="w-5 h-5 text-[#5F33E1] mt-0.5 shrink-0" />
+          <div className="bg-[#EDE8FB] dark:bg-[#29204E] border border-[#5F33E1]/20 dark:border-[#7C5CE8]/30 p-4 rounded-2xl flex items-start gap-3 transition-colors">
+            <PackageCheckIcon className="w-5 h-5 text-[#5F33E1] dark:text-[#9F87EF] mt-0.5 shrink-0" />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-extrabold text-[#5F33E1] truncate">
+              <p className="text-sm font-extrabold text-[#5F33E1] dark:text-[#9F87EF] truncate">
                 {order.vendorName}
               </p>
-              <p className="text-xs text-[#524E59] mt-0.5">
-                Order total: <span className="font-bold text-[#120D26]">{formatINR(order.amountPaid)}</span>
+              <p className="text-xs text-[#524E59] dark:text-[#ABA7B5] mt-0.5">
+                Order total: <span className="font-bold text-[#120D26] dark:text-[#F4F3F8]">{formatINR(order.amountPaid)}</span>
               </p>
             </div>
           </div>
 
           {/* Arrival Date */}
           <div>
-            <label className="block text-xs font-semibold text-[#120D26] mb-1.5">
+            <label className="block text-xs font-semibold text-[#120D26] dark:text-[#F4F3F8] mb-1.5">
               Arrival Date *
             </label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5F33E1]">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5F33E1] dark:text-[#9F87EF]">
                 <CalendarIcon className="w-4 h-4" />
               </span>
               <input
@@ -254,18 +253,18 @@ export default function LogArrivalSheet({
                 value={arrivalDate}
                 onChange={(e) => setArrivalDate(e.target.value)}
                 disabled={isSubmitting}
-                className="w-full pl-11 pr-4 py-3 rounded-2xl border border-[#F2F0F5] bg-[#F9F9FB] text-sm text-[#120D26] focus:outline-hidden focus:border-[#5F33E1] focus:bg-white transition-colors"
+                className="w-full pl-11 pr-4 py-3 rounded-2xl border border-[#F2F0F5] dark:border-[#28233D] bg-[#F9F9FB] dark:bg-[#1F1B30] text-sm text-[#120D26] dark:text-[#F4F3F8] focus:outline-hidden focus:border-[#5F33E1] dark:focus:border-[#7C5CE8] focus:bg-white dark:focus:bg-[#1F1B30] transition-colors [color-scheme:light] dark:[color-scheme:dark]"
               />
             </div>
           </div>
 
           {/* Transport Charges */}
-          <div className="bg-[#F8F9FA] rounded-2xl p-4 border border-[#F2F0F5] focus-within:border-[#5F33E1] transition-all">
-            <label className="block text-[11px] font-bold text-[#99969E] uppercase tracking-wider mb-1">
+          <div className="bg-[#F8F9FA] dark:bg-[#1F1B30] rounded-2xl p-4 border border-[#F2F0F5] dark:border-[#28233D] focus-within:border-[#5F33E1] dark:focus-within:border-[#7C5CE8] transition-all">
+            <label className="block text-[11px] font-bold text-[#99969E] dark:text-[#8C879B] uppercase tracking-wider mb-1">
               Transport / Truck Charges
             </label>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-extrabold text-[#120D26] select-none">₹</span>
+              <span className="text-2xl font-extrabold text-[#120D26] dark:text-[#F4F3F8] select-none">₹</span>
               <input
                 type="text"
                 inputMode="decimal"
@@ -274,10 +273,10 @@ export default function LogArrivalSheet({
                 value={transportCharges}
                 onChange={handleTransportChange}
                 disabled={isSubmitting}
-                className="w-full text-3xl font-black bg-transparent outline-none tracking-tight text-[#120D26]"
+                className="w-full text-3xl font-black bg-transparent outline-none tracking-tight text-[#120D26] dark:text-[#F4F3F8]"
               />
             </div>
-            <p className="text-[10px] text-[#99969E] mt-1 font-medium">
+            <p className="text-[10px] text-[#99969E] dark:text-[#8C879B] mt-1 font-medium">
               Amount paid to truck driver / transporter on arrival (leave 0 if none)
             </p>
           </div>
@@ -285,9 +284,9 @@ export default function LogArrivalSheet({
           {/* Transport Account Selector — only show if transport > 0 */}
           {parsedTransport > 0 && (
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-[#120D26]">
+              <label className="block text-xs font-bold text-[#120D26] dark:text-[#F4F3F8]">
                 <span className="flex items-center gap-1">
-                  <BanknoteIcon className="w-3.5 h-3.5 text-[#5F33E1]" />
+                  <BanknoteIcon className="w-3.5 h-3.5 text-[#5F33E1] dark:text-[#9F87EF]" />
                   Transport Paid From *
                 </span>
               </label>
@@ -300,35 +299,35 @@ export default function LogArrivalSheet({
                     disabled={isSubmitting}
                     className={`flex flex-col items-start min-w-[115px] p-2.5 rounded-2xl border transition-all shrink-0 text-left ${
                       transportAccountId === acc.id
-                        ? "border-[#5F33E1] bg-[#EDE8FB]/60 shadow-sm"
-                        : "border-[#F2F0F5] bg-[#F8F9FA] hover:bg-gray-100"
+                        ? "border-[#5F33E1] dark:border-[#7C5CE8] bg-[#EDE8FB]/60 dark:bg-[#29204E] shadow-sm"
+                        : "border-[#F2F0F5] dark:border-[#28233D] bg-[#F8F9FA] dark:bg-[#1F1B30] hover:bg-gray-100 dark:hover:bg-[#28233D]"
                     }`}
                   >
                     <span
                       className={`text-xs font-bold truncate max-w-[100px] ${
-                        transportAccountId === acc.id ? "text-[#5F33E1]" : "text-[#120D26]"
+                        transportAccountId === acc.id ? "text-[#5F33E1] dark:text-[#9F87EF]" : "text-[#120D26] dark:text-[#F4F3F8]"
                       }`}
                     >
                       {acc.name}
                     </span>
-                    <span className="text-[10px] text-[#99969E] mt-0.5 font-medium">
+                    <span className="text-[10px] text-[#99969E] dark:text-[#8C879B] mt-0.5 font-medium">
                       {formatINR(acc.balance)}
                     </span>
                   </button>
                 ))}
               </div>
               {/* Auto-expense notice */}
-              <div className="p-2.5 bg-[#F5F3FA] border border-[#E8E4F3] rounded-xl text-[11px] text-[#555260]">
-                Transport charges of <strong className="text-[#120D26]">{formatINR(parsedTransport)}</strong>{" "}
+              <div className="p-2.5 bg-[#F5F3FA] dark:bg-[#1F1B30] border border-[#E8E4F3] dark:border-[#28233D] rounded-xl text-[11px] text-[#555260] dark:text-[#ABA7B5] transition-colors">
+                Transport charges of <strong className="text-[#120D26] dark:text-[#F4F3F8]">{formatINR(parsedTransport)}</strong>{" "}
                 will be recorded as an expense from{" "}
-                <strong>{accounts.find((a) => a.id === transportAccountId)?.name || "selected account"}</strong>.
+                <strong className="text-[#120D26] dark:text-[#F4F3F8]">{accounts.find((a) => a.id === transportAccountId)?.name || "selected account"}</strong>.
               </div>
             </div>
           )}
 
           {/* Notes */}
           <div>
-            <label className="block text-xs font-semibold text-[#120D26] mb-1.5">
+            <label className="block text-xs font-semibold text-[#120D26] dark:text-[#F4F3F8] mb-1.5">
               Notes / Condition (Optional)
             </label>
             <input
@@ -337,7 +336,7 @@ export default function LogArrivalSheet({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               disabled={isSubmitting}
-              className="w-full px-4 py-3 rounded-2xl border border-[#F2F0F5] bg-[#F9F9FB] text-sm text-[#120D26] placeholder-[#99969E] focus:outline-hidden focus:border-[#5F33E1] focus:bg-white transition-colors"
+              className="w-full px-4 py-3 rounded-2xl border border-[#F2F0F5] dark:border-[#28233D] bg-[#F9F9FB] dark:bg-[#1F1B30] text-sm text-[#120D26] dark:text-[#F4F3F8] placeholder-[#99969E] dark:placeholder-[#8C879B] focus:outline-hidden focus:border-[#5F33E1] dark:focus:border-[#7C5CE8] focus:bg-white dark:focus:bg-[#1F1B30] transition-colors"
             />
           </div>
 
@@ -364,20 +363,20 @@ export default function LogArrivalSheet({
               }}
               className={`w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl border transition-all text-xs font-bold ${
                 isUploading
-                  ? "bg-[#EDE8FB] border-[#5F33E1]/30 text-[#5F33E1]"
+                  ? "bg-[#EDE8FB] dark:bg-[#29204E] border-[#5F33E1]/30 dark:border-[#7C5CE8]/40 text-[#5F33E1] dark:text-[#9F87EF]"
                   : receiptFile
-                  ? "bg-[#DCFCE7] border-[#BBF7D0] text-[#16A34A]"
-                  : "bg-[#F8F9FA] border-[#F2F0F5] text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                  ? "bg-[#DCFCE7] dark:bg-emerald-950/40 border-[#BBF7D0] dark:border-emerald-800 text-[#16A34A] dark:text-emerald-400"
+                  : "bg-[#F8F9FA] dark:bg-[#1F1B30] border-[#F2F0F5] dark:border-[#28233D] text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-[#3D3759] hover:text-gray-700 dark:hover:text-gray-200"
               }`}
             >
               {isUploading ? (
                 <>
-                  <SpinnerIcon className="w-4 h-4 text-[#5F33E1] animate-spin shrink-0" />
+                  <SpinnerIcon className="w-4 h-4 text-[#5F33E1] dark:text-[#9F87EF] animate-spin shrink-0" />
                   <span>Uploading Bilty to vault...</span>
                 </>
               ) : receiptFile ? (
                 <>
-                  <CheckIcon className="w-4 h-4 text-[#16A34A] shrink-0" />
+                  <CheckIcon className="w-4 h-4 text-[#16A34A] dark:text-emerald-400 shrink-0" />
                   <span>Receipt Photo Attached (Tap to remove)</span>
                 </>
               ) : (
@@ -393,8 +392,8 @@ export default function LogArrivalSheet({
           <div
             className={`p-3.5 rounded-2xl border transition-all cursor-pointer select-none ${
               isLastParcel
-                ? "bg-[#DCFCE7] border-[#BBF7D0]"
-                : "bg-[#F8F9FA] border-[#F2F0F5]"
+                ? "bg-[#DCFCE7] dark:bg-emerald-950/30 border-[#BBF7D0] dark:border-emerald-900/50"
+                : "bg-[#F8F9FA] dark:bg-[#1F1B30] border-[#F2F0F5] dark:border-[#28233D]"
             }`}
             onClick={() => !isSubmitting && setIsLastParcel(!isLastParcel)}
           >
@@ -402,17 +401,17 @@ export default function LogArrivalSheet({
               <div
                 className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
                   isLastParcel
-                    ? "bg-[#16A34A] border-[#16A34A]"
-                    : "bg-white border-[#D1D5DB]"
+                    ? "bg-[#16A34A] dark:bg-emerald-500 border-[#16A34A] dark:border-emerald-500"
+                    : "bg-white dark:bg-[#1F1B30] border-[#D1D5DB] dark:border-[#3D3759]"
                 }`}
               >
                 {isLastParcel && <CheckIcon className="w-3 h-3 text-white" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-xs font-bold ${isLastParcel ? "text-[#16A34A]" : "text-[#120D26]"}`}>
+                <p className={`text-xs font-bold ${isLastParcel ? "text-[#16A34A] dark:text-emerald-400" : "text-[#120D26] dark:text-[#F4F3F8]"}`}>
                   This is the last parcel
                 </p>
-                <p className="text-[10px] text-[#99969E] mt-0.5">
+                <p className="text-[10px] text-[#99969E] dark:text-[#8C879B] mt-0.5">
                   {isLastParcel
                     ? "Order will be marked as fully arrived"
                     : "Order will stay in 'Waiting' until the last parcel arrives"}
@@ -422,20 +421,20 @@ export default function LogArrivalSheet({
           </div>
 
           {/* Actor Notice */}
-          <div className="p-3 bg-[#F5F2FF] rounded-2xl flex items-center justify-between text-xs">
-            <span className="text-[#99969E]">Logged by</span>
-            <span className="font-semibold text-[#5F33E1]">{actor}</span>
+          <div className="p-3 bg-[#F5F2FF] dark:bg-[#1F1B30] border border-transparent dark:border-[#28233D] rounded-2xl flex items-center justify-between text-xs transition-colors">
+            <span className="text-[#99969E] dark:text-[#8C879B]">Logged by</span>
+            <span className="font-semibold text-[#5F33E1] dark:text-[#9F87EF]">{actor}</span>
           </div>
         </form>
 
         {/* Sticky Footer */}
-        <div className="p-5 pt-3 border-t border-[#F2F0F5] bg-white shrink-0" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0.75rem))' }}>
+        <div className="p-5 pt-3 border-t border-[#F2F0F5] dark:border-[#28233D] bg-white dark:bg-[#161324] shrink-0 transition-colors" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0.75rem))' }}>
           <button
             type="submit"
             form="log-arrival-form"
             onClick={handleSubmit}
             disabled={!arrivalDate || isSubmitting || isUploading}
-            className="w-full py-4 rounded-2xl text-base font-extrabold text-white bg-[#5F33E1] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all shadow-lg shadow-[#5F33E1]/25 hover:bg-[#5029C9] flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-2xl text-base font-extrabold text-white bg-[#5F33E1] dark:bg-[#7C5CE8] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all shadow-lg shadow-[#5F33E1]/25 dark:shadow-[#7C5CE8]/20 hover:bg-[#5029C9] dark:hover:bg-[#6A48D7] flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
               <>

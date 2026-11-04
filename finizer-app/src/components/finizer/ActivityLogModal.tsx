@@ -177,36 +177,35 @@ export default function ActivityLogModal({ isOpen, onClose }: ActivityLogModalPr
     <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center pointer-events-auto">
       {/* Dimmed backdrop */}
       <div
-        className="absolute inset-0 bg-black/45 backdrop-blur-xs transition-opacity animate-fade-in"
+        className="absolute inset-0 bg-black/55 backdrop-blur-[2px] transition-opacity animate-fade-in"
         onClick={onClose}
       />
 
       {/* Security Drawer Container */}
-      <div className="relative w-full max-w-md lg:max-w-2xl bg-white rounded-t-[32px] lg:rounded-[24px] shadow-2xl animate-slide-up lg:animate-fade-in max-h-[92%] lg:max-h-[85vh] flex flex-col z-10 overflow-hidden">
-        {/* Drag handle */}
-        <div className="pt-3 pb-2 px-5 shrink-0 flex flex-col items-center bg-white border-b border-[#F2F0F5]">
+      <div className="relative w-full max-w-md lg:max-w-2xl bg-white dark:bg-[#161324] rounded-t-[32px] lg:rounded-[24px] shadow-2xl animate-slide-up lg:animate-fade-in max-h-[92%] lg:max-h-[85vh] flex flex-col z-10 overflow-hidden border border-transparent dark:border-[#28233D] transition-colors">
+        {/* Drag handle & Header */}
+        <div className="pt-3 pb-2 px-5 shrink-0 flex flex-col items-center bg-white dark:bg-[#161324] border-b border-[#F2F0F5] dark:border-[#28233D] transition-colors">
           <div
             onClick={onClose}
-            className="w-12 h-1.5 bg-gray-200 rounded-full mb-3 cursor-pointer hover:bg-gray-300 transition-colors"
+            className="w-12 h-1.5 bg-gray-200 dark:bg-[#28233D] rounded-full mb-3 cursor-pointer hover:bg-gray-300 dark:hover:bg-[#3D3759] transition-colors"
           />
 
-          {/* Header */}
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1]">
-                <ShieldTickIcon className="w-5 h-5 text-[#5F33E1]" />
+              <div className="w-10 h-10 rounded-2xl bg-[#EDE8FB] dark:bg-[#29204E] flex items-center justify-center text-[#5F33E1] dark:text-[#9F87EF]">
+                <ShieldTickIcon className="w-5 h-5 text-[#5F33E1] dark:text-[#9F87EF]" />
               </div>
               <div>
-                <h2 className="text-lg font-black text-[#120D26]">Partner Trust Audit</h2>
-                <div className="flex items-center gap-1.5 text-[11px] text-[#16A34A] font-bold">
-                  <LockIcon className="w-3.5 h-3.5 text-[#16A34A]" /> Immutable Record
+                <h2 className="text-lg font-black text-[#120D26] dark:text-[#F4F3F8]">Partner Trust Audit</h2>
+                <div className="flex items-center gap-1.5 text-[11px] text-[#16A34A] dark:text-emerald-400 font-bold">
+                  <LockIcon className="w-3.5 h-3.5 text-[#16A34A] dark:text-emerald-400" /> Immutable Record
                 </div>
               </div>
             </div>
 
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800"
+              className="w-8 h-8 rounded-full bg-gray-100 dark:bg-[#28233D] flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
             >
               <CloseIcon className="w-4 h-4" />
             </button>
@@ -214,13 +213,13 @@ export default function ActivityLogModal({ isOpen, onClose }: ActivityLogModalPr
         </div>
 
         {/* STICKY FILTER: Signal-to-Noise Separator */}
-        <div className="px-5 py-3 bg-[#F8F9FA] border-b border-[#F2F0F5] flex items-center gap-2 shrink-0">
+        <div className="px-5 py-3 bg-[#F8F9FA] dark:bg-[#1F1B30] border-b border-[#F2F0F5] dark:border-[#28233D] flex items-center gap-2 shrink-0 transition-colors">
           <button
             onClick={() => setFilter("ALL")}
             className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
               filter === "ALL"
-                ? "bg-[#120D26] text-white shadow-sm"
-                : "bg-white text-[#99969E] border border-[#F2F0F5] hover:text-[#120D26]"
+                ? "bg-[#120D26] dark:bg-[#28233D] text-white shadow-sm"
+                : "bg-white dark:bg-[#161324] text-[#99969E] dark:text-[#8C879B] border border-[#F2F0F5] dark:border-[#28233D] hover:text-[#120D26] dark:hover:text-[#F4F3F8]"
             }`}
           >
             <FilterIcon className="w-3.5 h-3.5" />
@@ -232,14 +231,14 @@ export default function ActivityLogModal({ isOpen, onClose }: ActivityLogModalPr
             className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
               filter === "SUSPICIOUS"
                 ? "bg-[#D97706] text-white shadow-sm shadow-[#D97706]/30"
-                : "bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] hover:bg-[#FDE68A]"
+                : "bg-[#FEF3C7] dark:bg-amber-950/40 text-[#92400E] dark:text-amber-400 border border-[#FDE68A] dark:border-amber-900/50 hover:bg-[#FDE68A] dark:hover:bg-amber-900/60"
             }`}
           >
             <AlertTriangleIcon className="w-3.5 h-3.5" />
             <span>Edits & Deletes</span>
             <span
               className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                filter === "SUSPICIOUS" ? "bg-white/20 text-white" : "bg-[#FDE68A] text-[#92400E]"
+                filter === "SUSPICIOUS" ? "bg-white/20 text-white" : "bg-[#FDE68A] dark:bg-amber-900/80 text-[#92400E] dark:text-amber-300"
               }`}
             >
               {suspiciousLogs.length}
@@ -251,8 +250,8 @@ export default function ActivityLogModal({ isOpen, onClose }: ActivityLogModalPr
         <div className="flex-1 overflow-y-auto p-5 space-y-3.5 scrollbar-hide">
           {displayedLogs.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-sm font-bold text-[#120D26]">No suspicious activity found</p>
-              <p className="text-xs text-[#99969E] mt-1">All financial records remain unaltered.</p>
+              <p className="text-sm font-bold text-[#120D26] dark:text-[#F4F3F8]">No suspicious activity found</p>
+              <p className="text-xs text-[#99969E] dark:text-[#8C879B] mt-1">All financial records remain unaltered.</p>
             </div>
           ) : (
             displayedLogs.map((log) => {
@@ -263,39 +262,39 @@ export default function ActivityLogModal({ isOpen, onClose }: ActivityLogModalPr
               return (
                 <div
                   key={log.id}
-                  className="bg-white rounded-2xl border border-[#F2F0F5] shadow-sm overflow-hidden hover:border-gray-300 transition-colors"
+                  className="bg-white dark:bg-[#161324] rounded-2xl border border-[#F2F0F5] dark:border-[#28233D] shadow-sm overflow-hidden hover:border-gray-300 dark:hover:border-[#3D3759] transition-colors"
                 >
                   {/* Card Header: Actor Attribution + Timestamp */}
-                  <div className="px-4 py-2.5 bg-[#F8F9FA] border-b border-[#F2F0F5] flex items-center justify-between">
+                  <div className="px-4 py-2.5 bg-[#F8F9FA] dark:bg-[#1F1B30] border-b border-[#F2F0F5] dark:border-[#28233D] flex items-center justify-between transition-colors">
                     <div className="flex items-center gap-2">
                       <span
                         className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
                           log.action === "CREATED"
-                            ? "bg-[#EDE8FB] text-[#5F33E1]"
+                            ? "bg-[#EDE8FB] dark:bg-[#29204E] text-[#5F33E1] dark:text-[#9F87EF]"
                             : log.action === "EDITED"
-                            ? "bg-[#FEF3C7] text-[#D97706]"
-                            : "bg-[#FEE2E2] text-[#DC2626]"
+                            ? "bg-[#FEF3C7] dark:bg-amber-950/40 text-[#D97706] dark:text-amber-400"
+                            : "bg-[#FEE2E2] dark:bg-red-950/40 text-[#DC2626] dark:text-red-400"
                         }`}
                       >
                         {log.action.replace("_", " ")}
                       </span>
-                      <div className="flex items-center gap-1 text-xs font-bold text-[#120D26]">
-                        <UserOctagonIcon className="w-3.5 h-3.5 text-[#120D26]" />
+                      <div className="flex items-center gap-1 text-xs font-bold text-[#120D26] dark:text-[#F4F3F8]">
+                        <UserOctagonIcon className="w-3.5 h-3.5 text-[#120D26] dark:text-[#F4F3F8]" />
                         <span>{log.actor}</span>
                       </div>
                     </div>
 
                     <div className="text-right">
-                      <p className="text-[11px] font-bold text-[#120D26] leading-tight">
+                      <p className="text-[11px] font-bold text-[#120D26] dark:text-[#F4F3F8] leading-tight">
                         {time.exact}
                       </p>
-                      <p className="text-[10px] text-[#99969E]">{time.relative}</p>
+                      <p className="text-[10px] text-[#99969E] dark:text-[#8C879B]">{time.relative}</p>
                     </div>
                   </div>
 
                   {/* Card Body */}
                   <div className="p-4 space-y-2.5">
-                    <p className="text-xs font-semibold text-[#120D26]">
+                    <p className="text-xs font-semibold text-[#120D26] dark:text-[#F4F3F8]">
                       {log.action === "CREATED" && (
                         <span>Added ₹{snapshot?.amount.toLocaleString("en-IN")} to {snapshot?.category_name}</span>
                       )}
@@ -309,8 +308,8 @@ export default function ActivityLogModal({ isOpen, onClose }: ActivityLogModalPr
 
                     {/* FORENSIC DIFF TABLE (Catches sneaky account, category, amount, or date switches) */}
                     {log.action === "EDITED" && diffs.length > 0 && (
-                      <div className="bg-[#F8F9FA] rounded-xl p-3 border border-[#F2F0F5] space-y-2">
-                        <p className="text-[10px] uppercase font-bold tracking-wider text-[#99969E]">
+                      <div className="bg-[#F8F9FA] dark:bg-[#1F1B30] rounded-xl p-3 border border-[#F2F0F5] dark:border-[#28233D] space-y-2 transition-colors">
+                        <p className="text-[10px] uppercase font-bold tracking-wider text-[#99969E] dark:text-[#8C879B]">
                           Audit Changes Detected
                         </p>
                         {diffs.map((diff, idx) => (
@@ -318,13 +317,13 @@ export default function ActivityLogModal({ isOpen, onClose }: ActivityLogModalPr
                             key={idx}
                             className="flex items-center justify-between text-xs font-medium"
                           >
-                            <span className="text-gray-500 font-semibold">{diff.field}:</span>
+                            <span className="text-gray-500 dark:text-[#8C879B] font-semibold">{diff.field}:</span>
                             <div className="flex items-center gap-1.5 font-mono text-[11px]">
-                              <span className="text-[#DC2626] line-through opacity-75">
+                              <span className="text-[#DC2626] dark:text-red-400 line-through opacity-75">
                                 {diff.old}
                               </span>
                               <ArrowRightIcon className="w-3 h-3 text-gray-400 shrink-0" />
-                              <span className="text-[#120D26] font-bold">
+                              <span className="text-[#120D26] dark:text-[#F4F3F8] font-bold">
                                 {diff.new}
                               </span>
                             </div>
@@ -335,11 +334,11 @@ export default function ActivityLogModal({ isOpen, onClose }: ActivityLogModalPr
 
                     {/* Deletion Context */}
                     {log.action === "SOFT_DELETED" && (
-                      <div className="bg-[#FEF2F2] border border-[#FEE2E2] rounded-xl p-2.5 text-xs text-[#DC2626] flex items-center justify-between">
+                      <div className="bg-[#FEF2F2] dark:bg-red-950/40 border border-[#FEE2E2] dark:border-red-900/50 rounded-xl p-2.5 text-xs text-[#DC2626] dark:text-red-400 flex items-center justify-between transition-colors">
                         <span>
                           <strong>Soft-deleted:</strong> ₹{snapshot?.amount.toLocaleString("en-IN")} via {snapshot?.account_name}
                         </span>
-                        <TrashIcon className="w-4 h-4 text-[#DC2626] shrink-0" />
+                        <TrashIcon className="w-4 h-4 text-[#DC2626] dark:text-red-400 shrink-0" />
                       </div>
                     )}
                   </div>
@@ -350,25 +349,25 @@ export default function ActivityLogModal({ isOpen, onClose }: ActivityLogModalPr
         </div>
 
         {/* FOOTER: Export Audit Proof */}
-        <div className="p-4 border-t border-[#F2F0F5] bg-white shrink-0 space-y-2">
+        <div className="p-4 border-t border-[#F2F0F5] dark:border-[#28233D] bg-white dark:bg-[#161324] shrink-0 space-y-2 transition-colors">
           {exportError && (
-            <div className="p-3 bg-[#FEF2F2] border border-[#FEE2E2] rounded-2xl text-xs text-[#DC2626] font-bold">
+            <div className="p-3 bg-[#FEF2F2] dark:bg-red-950/40 border border-[#FEE2E2] dark:border-red-900/50 rounded-2xl text-xs text-[#DC2626] dark:text-red-400 font-bold">
               {exportError}
             </div>
           )}
           <button
             onClick={handleExportAuditPDF}
             disabled={isExporting}
-            className="w-full py-3.5 rounded-2xl border border-[#EDE8FB] hover:border-[#5F33E1] bg-[#F5F2FF] text-xs font-bold text-[#5F33E1] flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+            className="w-full py-3.5 rounded-2xl border border-[#EDE8FB] dark:border-[#28233D] hover:border-[#5F33E1] dark:hover:border-[#7C5CE8] bg-[#F5F2FF] dark:bg-[#1F1B30] text-xs font-bold text-[#5F33E1] dark:text-[#9F87EF] flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
           >
             {isExporting ? (
               <>
-                <SpinnerIcon className="w-4 h-4 text-[#5F33E1] animate-spin" />
+                <SpinnerIcon className="w-4 h-4 text-[#5F33E1] dark:text-[#9F87EF] animate-spin" />
                 <span>Generating Cryptographic SHA-256 PDF...</span>
               </>
             ) : (
               <>
-                <ShieldTickIcon className="w-4 h-4 text-[#5F33E1]" />
+                <ShieldTickIcon className="w-4 h-4 text-[#5F33E1] dark:text-[#9F87EF]" />
                 <span>Export Signed Audit Report for Partners (PDF)</span>
               </>
             )}

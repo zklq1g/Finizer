@@ -52,12 +52,7 @@ export default function FinizerApp() {
 
   // ── Admin auth ─────────────────────────────────────────────────────
   const [adminUnlocked, setAdminUnlocked] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (sessionStorage.getItem("finizer_admin_session") === "1") {
-      setAdminUnlocked(true);
-    }
-  }, []);
+  const [isSessionChecking, setIsSessionChecking] = useState<boolean>(true);
 
   const handleAdminUnlock = useCallback(() => {
     sessionStorage.setItem("finizer_admin_session", "1");
@@ -67,6 +62,49 @@ export default function FinizerApp() {
   const handleAdminLock = useCallback(() => {
     sessionStorage.removeItem("finizer_admin_session");
     setAdminUnlocked(false);
+  }, []);
+
+  useEffect(() => {
+    // 1. Check existing session on mount (persists across page refreshes in this tab)
+    if (sessionStorage.getItem("finizer_admin_session") === "1") {
+      setAdminUnlocked(true);
+    }
+    setIsSessionChecking(false);
+
+    // 2. Track page unload to distinguish between refreshing the page vs leaving the tab
+    let isUnloading = false;
+    const markUnloading = () => {
+      isUnloading = true;
+    };
+    window.addEventListener("beforeunload", markUnloading);
+    window.addEventListener("pagehide", markUnloading);
+
+    // 3. Auto-lock only when the user actually leaves the tab (switches tab, minimizes, switches apps)
+    let hideTimer: NodeJS.Timeout | null = null;
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        if (isUnloading) return; // Refreshing or navigating, do not lock
+        hideTimer = setTimeout(() => {
+          if (!isUnloading && document.visibilityState === "hidden") {
+            sessionStorage.removeItem("finizer_admin_session");
+            setAdminUnlocked(false);
+          }
+        }, 500);
+      } else if (document.visibilityState === "visible") {
+        if (hideTimer) {
+          clearTimeout(hideTimer);
+          hideTimer = null;
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("beforeunload", markUnloading);
+      window.removeEventListener("pagehide", markUnloading);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (hideTimer) clearTimeout(hideTimer);
+    };
   }, []);
 
   // Live in-memory transactions feed
@@ -141,6 +179,12 @@ export default function FinizerApp() {
     { id: "deliveries" as TabId, label: "Deliveries", icon: TruckIcon },
     { id: "settings" as TabId, label: "Settings", icon: ProfileIcon },
   ];
+
+  if (isSessionChecking) {
+    return (
+      <div className="min-h-screen w-full bg-[#F0F2F5] dark:bg-[#0C0A14] flex items-center justify-center transition-colors duration-200" />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F0F2F5] dark:bg-[#0C0A14] flex flex-col items-center justify-start lg:justify-start p-0 overflow-y-auto lg:overflow-hidden transition-colors duration-200">

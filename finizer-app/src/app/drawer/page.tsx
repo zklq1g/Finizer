@@ -34,12 +34,7 @@ function formatTime(isoString: string): string {
 export default function CashDrawerPage() {
   // ── Drawer auth ────────────────────────────────────────────────────
   const [drawerUnlocked, setDrawerUnlocked] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (sessionStorage.getItem("finizer_drawer_session") === "1") {
-      setDrawerUnlocked(true);
-    }
-  }, []);
+  const [isSessionChecking, setIsSessionChecking] = useState<boolean>(true);
 
   const handleDrawerUnlock = useCallback(() => {
     sessionStorage.setItem("finizer_drawer_session", "1");
@@ -49,6 +44,49 @@ export default function CashDrawerPage() {
   const handleDrawerLock = useCallback(() => {
     sessionStorage.removeItem("finizer_drawer_session");
     setDrawerUnlocked(false);
+  }, []);
+
+  useEffect(() => {
+    // 1. Initial session check on mount (persists across page reloads in this tab)
+    if (sessionStorage.getItem("finizer_drawer_session") === "1") {
+      setDrawerUnlocked(true);
+    }
+    setIsSessionChecking(false);
+
+    // 2. Track page unload to distinguish between refreshing the page vs leaving the tab
+    let isUnloading = false;
+    const markUnloading = () => {
+      isUnloading = true;
+    };
+    window.addEventListener("beforeunload", markUnloading);
+    window.addEventListener("pagehide", markUnloading);
+
+    // 3. Auto-lock only when the user actually leaves the tab (switches tab, minimizes, switches apps)
+    let hideTimer: NodeJS.Timeout | null = null;
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        if (isUnloading) return; // Refreshing or navigating, do not lock
+        hideTimer = setTimeout(() => {
+          if (!isUnloading && document.visibilityState === "hidden") {
+            sessionStorage.removeItem("finizer_drawer_session");
+            setDrawerUnlocked(false);
+          }
+        }, 500);
+      } else if (document.visibilityState === "visible") {
+        if (hideTimer) {
+          clearTimeout(hideTimer);
+          hideTimer = null;
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("beforeunload", markUnloading);
+      window.removeEventListener("pagehide", markUnloading);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (hideTimer) clearTimeout(hideTimer);
+    };
   }, []);
 
   // Form state
@@ -237,6 +275,13 @@ export default function CashDrawerPage() {
   };
 
   const totalOut = todayEntries.reduce((sum, t) => sum + Number(t.amount), 0);
+
+  // ── Session check state ───────────────────────────────────────────
+  if (isSessionChecking) {
+    return (
+      <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#0C0A14] flex items-center justify-center transition-colors duration-200" />
+    );
+  }
 
   // ── Loading state ─────────────────────────────────────────────────
   if (isLoading) {

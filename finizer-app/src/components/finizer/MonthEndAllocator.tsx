@@ -27,8 +27,6 @@ interface MonthEndAllocatorProps {
   targetMonth?: Date;
 }
 
-const DEFAULT_ACCOUNTS: AccountItem[] = [];
-
 export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: MonthEndAllocatorProps) {
   const { actor } = useActor();
   const targetYear = targetMonth ? targetMonth.getFullYear() : new Date().getFullYear();
@@ -40,6 +38,17 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
 
   const [metrics, setMetrics] = useState<FinancialMetrics | null>(null);
   const [loadingMetrics, setLoadingMetrics] = useState<boolean>(true);
+
+  // Close on Escape key for desktop experience
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onBack();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onBack]);
 
   useEffect(() => {
     async function loadMetrics() {
@@ -118,7 +127,7 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
 
   const selectedAccount = accounts.find((a) => a.id === payoutAccountId) || accounts[0];
 
-  // FIX #3: Mode-Switch Reset to prevent 100,000% calculation explosion
+  // Reset inputs when switching between INR and %
   useEffect(() => {
     setOpex("");
     setSalaries("");
@@ -210,8 +219,8 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
   // ─────────────────────────────────────────────
   if (loadingMetrics) {
     return (
-      <div className="absolute inset-0 z-50 bg-[#F8F9FA] flex flex-col items-center justify-center p-6 text-[#99969E] animate-fade-in">
-        <SpinnerIcon className="w-8 h-8 animate-spin mb-3 text-[#5F33E1]" />
+      <div className="absolute inset-0 z-50 bg-[#F8F9FA] dark:bg-[#0D0B14] flex flex-col items-center justify-center p-6 text-[#99969E] dark:text-[#8C879B] animate-fade-in transition-colors">
+        <SpinnerIcon className="w-8 h-8 animate-spin mb-3 text-[#5F33E1] dark:text-[#9F87EF]" />
         <p className="text-xs font-semibold">Calculating live finances for closure...</p>
       </div>
     );
@@ -222,52 +231,58 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
   // ─────────────────────────────────────────────
   if (isLossMonth) {
     return (
-      <div className="absolute inset-0 z-50 bg-[#F8F9FA] flex flex-col animate-fade-in">
+      <div className="absolute inset-0 z-50 bg-[#F8F9FA] dark:bg-[#0D0B14] flex flex-col animate-fade-in transition-colors overflow-y-auto">
         {/* Header */}
-        <header className="bg-white px-5 py-4 border-b border-[#F2F0F5] flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onBack}
-              disabled={isSubmitting}
-              className="p-1 -ml-1 text-[#99969E] hover:text-[#120D26]"
-            >
-              <ArrowLeftIcon className="w-5 h-5" />
-            </button>
-            <div>
-              <h2 className="text-lg font-black text-[#120D26]">Month-End Closure</h2>
-              <p className="text-xs text-[#99969E] font-medium">{currentMonth} {currentYear}</p>
+        <header className="bg-white dark:bg-[#161324] px-5 lg:px-8 py-4 border-b border-[#F2F0F5] dark:border-[#28233D] shrink-0 transition-colors">
+          <div className="max-w-5xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onBack}
+                disabled={isSubmitting}
+                className="p-2 -ml-2 rounded-xl text-[#99969E] dark:text-[#8C879B] hover:text-[#120D26] dark:hover:text-[#F4F3F8] hover:bg-gray-100 dark:hover:bg-[#1F1B30] transition-colors flex items-center gap-1.5 text-xs font-bold"
+              >
+                <ArrowLeftIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">Back</span>
+              </button>
+              <div>
+                <h2 className="text-lg font-black text-[#120D26] dark:text-[#F4F3F8]">Month-End Closure</h2>
+                <p className="text-xs text-[#99969E] dark:text-[#8C879B] font-medium">{currentMonth} {currentYear}</p>
+              </div>
             </div>
+            <span className="text-[10px] uppercase font-extrabold tracking-wide text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2.5 py-1 rounded-full border border-red-200 dark:border-red-900/50">
+              Operational Deficit
+            </span>
           </div>
         </header>
 
         {/* Loss Protocol Body */}
-        <main className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-sm mx-auto">
-          <div className="w-16 h-16 rounded-full bg-[#EDE8FB] border border-[#5F33E1]/20 flex items-center justify-center mb-4">
-            <AlertTriangleIcon className="w-8 h-8 text-[#5F33E1]" />
+        <main className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-lg mx-auto w-full my-auto">
+          <div className="w-16 h-16 rounded-full bg-[#EDE8FB] dark:bg-[#29204E] border border-[#5F33E1]/20 dark:border-[#7C5CE8]/30 flex items-center justify-center mb-4">
+            <AlertTriangleIcon className="w-8 h-8 text-[#5F33E1] dark:text-[#9F87EF]" />
           </div>
 
-          <h2 className="text-2xl font-black text-[#120D26] mb-2">
+          <h2 className="text-2xl font-black text-[#120D26] dark:text-[#F4F3F8] mb-1">
             Operational Loss Detected
           </h2>
 
-          <p className="text-3xl font-black text-[#120D26] mb-3">
+          <p className="text-3xl font-black text-red-600 dark:text-red-400 mb-4">
             - {formatINR(Math.abs(netProfit))}
           </p>
 
           {/* Income vs Expense breakdown */}
-          <div className="w-full bg-[#EDE8FB]/60 border border-[#5F33E1]/20 p-3.5 rounded-2xl mb-4 text-xs">
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-[#524E59] font-medium">Month Income</span>
-              <span className="font-extrabold text-[#5F33E1]">{formatINR(monthlyIncome)}</span>
+          <div className="w-full bg-white dark:bg-[#161324] border border-[#F2F0F5] dark:border-[#28233D] p-4 rounded-2xl mb-4 text-xs shadow-xs transition-colors">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[#524E59] dark:text-[#8C879B] font-medium">Month Income</span>
+              <span className="font-extrabold text-[#16A34A] dark:text-emerald-400">{formatINR(monthlyIncome)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-[#524E59] font-medium">Month Expenses</span>
-              <span className="font-extrabold text-[#120D26]">{formatINR(monthlyExpense)}</span>
+              <span className="text-[#524E59] dark:text-[#8C879B] font-medium">Month Expenses</span>
+              <span className="font-extrabold text-[#DC2626] dark:text-red-400">{formatINR(monthlyExpense)}</span>
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-[#F2F0F5] text-left text-xs text-[#524E59] space-y-2 mb-6">
-            <p className="font-bold text-[#120D26]">Proper Accounting Protocol:</p>
+          <div className="bg-white dark:bg-[#161324] p-4 rounded-2xl border border-[#F2F0F5] dark:border-[#28233D] text-left text-xs text-[#524E59] dark:text-[#ABA7B5] space-y-2 mb-6 shadow-xs transition-colors">
+            <p className="font-bold text-[#120D26] dark:text-[#F4F3F8]">Proper Accounting Protocol:</p>
             <p>
               • Profit distributions and withdrawals are locked during negative cash flow.
             </p>
@@ -282,13 +297,13 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
           </div>
 
           {errorMessage && (
-            <div className="p-3 mb-4 w-full bg-[#EDE8FB] border border-[#5F33E1]/30 rounded-2xl text-xs text-[#5F33E1] font-bold">
+            <div className="p-3 mb-4 w-full bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-2xl text-xs text-red-600 dark:text-red-400 font-bold">
               {errorMessage}
             </div>
           )}
 
           {monthAlreadyClosed && (
-            <div className="p-3 mb-4 w-full bg-[#FEF3C7] border border-[#FDE68A] rounded-2xl text-xs text-[#92400E] font-bold">
+            <div className="p-3 mb-4 w-full bg-[#FEF3C7] dark:bg-amber-950/40 border border-[#FDE68A] dark:border-amber-900/50 rounded-2xl text-xs text-[#92400E] dark:text-amber-400 font-bold">
               This month has already been closed and locked.
             </div>
           )}
@@ -296,7 +311,7 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
           <button
             onClick={handleSubmit}
             disabled={isSubmitting || monthAlreadyClosed}
-            className="w-full py-4 rounded-2xl bg-[#5F33E1] text-white font-bold text-sm shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-[#5029C9]"
+            className="w-full py-4 rounded-2xl bg-[#5F33E1] dark:bg-[#7C5CE8] text-white font-bold text-sm shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-[#5029C9] dark:hover:bg-[#6A48D7] disabled:opacity-40"
           >
             {isSubmitting ? (
               <>
@@ -316,331 +331,376 @@ export default function MonthEndAllocator({ onBack, onSuccess, targetMonth }: Mo
   }
 
   // ─────────────────────────────────────────────
-  // PROFIT MONTH VIEW (Dual-Mode Allocation Engine)
+  // PROFIT MONTH VIEW (Responsive 2-Column Desktop Grid)
   // ─────────────────────────────────────────────
   return (
-    <div className="absolute inset-0 z-50 bg-[#F8F9FA] flex flex-col animate-fade-in">
+    <div className="absolute inset-0 z-50 bg-[#F8F9FA] dark:bg-[#0D0B14] flex flex-col animate-fade-in text-[#120D26] dark:text-[#F4F3F8] transition-colors overflow-hidden">
       {/* 1. Header */}
-      <header className="bg-white px-5 py-4 border-b border-[#F2F0F5] flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onBack}
-            disabled={isSubmitting}
-            className="p-1 -ml-1 text-[#99969E] hover:text-[#120D26]"
-          >
-            <ArrowLeftIcon className="w-5 h-5" />
-          </button>
-          <div>
-            <h2 className="text-lg font-black text-[#120D26]">Month-End Profit Allocator</h2>
-            <p className="text-xs text-[#99969E] font-medium">{currentMonth} {currentYear}</p>
+      <header className="bg-white dark:bg-[#161324] px-5 lg:px-8 py-4 border-b border-[#F2F0F5] dark:border-[#28233D] shrink-0 transition-colors">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onBack}
+              disabled={isSubmitting}
+              className="p-2 -ml-2 rounded-xl text-[#99969E] dark:text-[#8C879B] hover:text-[#120D26] dark:hover:text-[#F4F3F8] hover:bg-gray-100 dark:hover:bg-[#1F1B30] transition-colors flex items-center gap-1.5 text-xs font-bold"
+            >
+              <ArrowLeftIcon className="w-4 h-4" />
+              <span className="hidden sm:inline">Back to Dashboard</span>
+            </button>
+            <div>
+              <h2 className="text-lg font-black text-[#120D26] dark:text-[#F4F3F8]">Month-End Profit Allocator</h2>
+              <p className="text-xs text-[#99969E] dark:text-[#8C879B] font-medium">{currentMonth} {currentYear}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="hidden sm:inline-flex text-[10px] uppercase font-extrabold tracking-wide text-[#5F33E1] dark:text-[#9F87EF] bg-[#EDE8FB] dark:bg-[#29204E] px-2.5 py-1 rounded-full">
+              Accounting Ritual
+            </span>
           </div>
         </div>
       </header>
 
-      {/* 2. Scrollable Allocation Body */}
-      <main className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar-hide max-w-lg mx-auto w-full">
-        {errorMessage && (
-          <div className="p-3.5 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-600 font-bold flex items-center gap-2">
-            <AlertTriangleIcon className="w-4 h-4 shrink-0 text-red-600" />
-            <span>{errorMessage}</span>
-          </div>
-        )}
-
-        {monthAlreadyClosed && (
-          <div className="p-3.5 bg-[#FEF3C7] border border-[#FDE68A] rounded-2xl text-xs text-[#92400E] font-bold flex items-center gap-2">
-            <AlertTriangleIcon className="w-4 h-4 shrink-0 text-[#D97706]" />
-            <span>{currentMonth} {currentYear} has already been closed and locked. You cannot close it again.</span>
-          </div>
-        )}
-
-        {/* Income vs Expenses breakdown */}
-        <div className="bg-white rounded-2xl p-4 border border-[#F2F0F5] shadow-xs">
-          <div className="flex justify-between items-center text-xs mb-2">
-            <span className="text-[#99969E] font-semibold">Total Revenue / Income</span>
-            <span className="font-extrabold text-[#5F33E1] text-sm">{formatINR(monthlyIncome)}</span>
-          </div>
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-[#99969E] font-semibold">Total Store Expenses</span>
-            <span className="font-extrabold text-[#120D26] text-sm">{formatINR(monthlyExpense)}</span>
-          </div>
-        </div>
-
-        {/* Hero Card: Net Profit & Mode Toggle */}
-        <div className="bg-white rounded-3xl p-5 border border-[#F2F0F5] shadow-xs">
-          <div className="flex items-start justify-between">
-            <div>
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#99969E]">
-                Net Profit Earned
-              </span>
-              <h1 className="text-3xl font-black text-[#120D26] tracking-tight mt-0.5">
-                {formatINR(netProfit)}
-              </h1>
+      {/* 2. Scrollable Allocation Body: 2-Column Desktop Layout */}
+      <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-5 scrollbar-hide">
+        <div className="max-w-5xl mx-auto">
+          {errorMessage && (
+            <div className="mb-4 p-3.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-2xl text-xs text-red-600 dark:text-red-400 font-bold flex items-center gap-2">
+              <AlertTriangleIcon className="w-4 h-4 shrink-0 text-red-600 dark:text-red-400" />
+              <span>{errorMessage}</span>
             </div>
+          )}
 
-            {/* Mode Switcher: Rupees vs Percentage */}
-            <div className="flex bg-[#F5F2FF] p-1 rounded-xl border border-[#EDE8FB]">
-              <button
-                type="button"
-                onClick={() => setMode("AMOUNT")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${
-                  mode === "AMOUNT"
-                    ? "bg-[#5F33E1] text-white shadow-xs"
-                    : "text-[#99969E] hover:text-[#5F33E1]"
+          {monthAlreadyClosed && (
+            <div className="mb-4 p-3.5 bg-[#FEF3C7] dark:bg-amber-950/40 border border-[#FDE68A] dark:border-amber-900/50 rounded-2xl text-xs text-[#92400E] dark:text-amber-400 font-bold flex items-center gap-2">
+              <AlertTriangleIcon className="w-4 h-4 shrink-0 text-[#D97706]" />
+              <span>{currentMonth} {currentYear} has already been closed and locked. You cannot close it again.</span>
+            </div>
+          )}
+
+          {/* 2-Column Responsive Grid on Desktop */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 items-start pb-8">
+            
+            {/* LEFT COLUMN: Summary Hero, Income Breakdown, Live Unallocated & Desktop Action (lg:col-span-5) */}
+            <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-0">
+              
+              {/* Hero Card: Net Profit & Mode Toggle */}
+              <div className="bg-white dark:bg-[#161324] rounded-3xl p-5 border border-[#F2F0F5] dark:border-[#28233D] shadow-xs transition-colors">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#99969E] dark:text-[#8C879B]">
+                      Net Profit Earned
+                    </span>
+                    <h1 className="text-3xl font-black text-[#120D26] dark:text-[#F4F3F8] tracking-tight mt-0.5">
+                      {formatINR(netProfit)}
+                    </h1>
+                  </div>
+
+                  {/* Mode Switcher: Rupees vs Percentage */}
+                  <div className="flex bg-[#F5F2FF] dark:bg-[#1F1B30] p-1 rounded-xl border border-[#EDE8FB] dark:border-[#28233D] transition-colors">
+                    <button
+                      type="button"
+                      onClick={() => setMode("AMOUNT")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${
+                        mode === "AMOUNT"
+                          ? "bg-[#5F33E1] dark:bg-[#7C5CE8] text-white shadow-xs"
+                          : "text-[#99969E] dark:text-[#8C879B] hover:text-[#5F33E1] dark:hover:text-[#9F87EF]"
+                      }`}
+                    >
+                      ₹ INR
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMode("PERCENT")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1 ${
+                        mode === "PERCENT"
+                          ? "bg-[#5F33E1] dark:bg-[#7C5CE8] text-white shadow-xs"
+                          : "text-[#99969E] dark:text-[#8C879B] hover:text-[#5F33E1] dark:hover:text-[#9F87EF]"
+                      }`}
+                    >
+                      <PercentageSquareIcon className="w-3.5 h-3.5" />
+                      <span>%</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Income vs Expenses breakdown */}
+              <div className="bg-white dark:bg-[#161324] rounded-2xl p-4 border border-[#F2F0F5] dark:border-[#28233D] shadow-xs space-y-2 transition-colors">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-[#99969E] dark:text-[#8C879B] font-semibold">Total Revenue / Income</span>
+                  <span className="font-extrabold text-[#16A34A] dark:text-emerald-400 text-sm">{formatINR(monthlyIncome)}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-[#99969E] dark:text-[#8C879B] font-semibold">Total Store Expenses</span>
+                  <span className="font-extrabold text-[#DC2626] dark:text-red-400 text-sm">{formatINR(monthlyExpense)}</span>
+                </div>
+              </div>
+
+              {/* Live Unallocated Retained Earnings Status Card */}
+              <div
+                className={`p-5 rounded-2xl border transition-all ${
+                  isOverAllocated || isOverdraft
+                    ? "bg-[#FEF2F2] dark:bg-red-950/30 border-[#FEE2E2] dark:border-red-900/50"
+                    : "bg-white dark:bg-[#161324] border-[#F2F0F5] dark:border-[#28233D] shadow-xs"
                 }`}
               >
-                ₹ INR
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode("PERCENT")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1 ${
-                  mode === "PERCENT"
-                    ? "bg-[#5F33E1] text-white shadow-xs"
-                    : "text-[#99969E] hover:text-[#5F33E1]"
-                }`}
-              >
-                <PercentageSquareIcon className="w-3.5 h-3.5" />
-                <span>%</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Allocation Buckets */}
-        <div className="space-y-3">
-          <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#99969E]">
-            Retained Earnings Designations
-          </span>
-
-          {/* 1. Operating Expense Reserve */}
-          <div className="bg-white rounded-2xl p-4 border border-[#F2F0F5] focus-within:border-[#5F33E1] transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1]">
-                  <WalletIcon className="w-4 h-4 text-[#5F33E1]" />
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-extrabold text-[#120D26] dark:text-[#F4F3F8]">
+                    Unallocated Retained Earnings
+                  </span>
+                  <span className="text-[10px] text-[#99969E] dark:text-[#8C879B] font-medium">
+                    Stays in Business
+                  </span>
                 </div>
-                <div>
-                  <h4 className="text-xs font-bold text-[#120D26]">Next Month OpEx Reserve</h4>
-                  <p className="text-[10px] text-[#99969E]">Rent, electricity & utilities</p>
-                </div>
-              </div>
-              <span className="text-xs font-extrabold text-[#5F33E1]">
-                {formatINR(amtOpex)}
-              </span>
-            </div>
-            <div className="flex items-center border border-[#F2F0F5] rounded-xl px-3 py-2 bg-[#F8F9FA]">
-              <span className="text-xs font-bold text-[#99969E] mr-2">
-                {mode === "PERCENT" ? "%" : "₹"}
-              </span>
-              <input
-                type="text"
-                inputMode="decimal"
-                placeholder={mode === "PERCENT" ? "0.00 %" : "0.00"}
-                value={opex}
-                onChange={handleInput(setOpex, mode === "PERCENT")}
-                className="w-full bg-transparent text-sm font-bold text-[#120D26] outline-none"
-              />
-            </div>
-          </div>
 
-          {/* 2. Salary Reserve */}
-          <div className="bg-white rounded-2xl p-4 border border-[#F2F0F5] focus-within:border-[#5F33E1] transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1]">
-                  <UserOctagonIcon className="w-4 h-4 text-[#5F33E1]" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-[#120D26]">Staff Salaries Reserve</h4>
-                  <p className="text-[10px] text-[#99969E]">Retained in bank for payroll</p>
-                </div>
-              </div>
-              <span className="text-xs font-extrabold text-[#5F33E1]">
-                {formatINR(amtSalaries)}
-              </span>
-            </div>
-            <div className="flex items-center border border-[#F2F0F5] rounded-xl px-3 py-2 bg-[#F8F9FA]">
-              <span className="text-xs font-bold text-[#99969E] mr-2">
-                {mode === "PERCENT" ? "%" : "₹"}
-              </span>
-              <input
-                type="text"
-                inputMode="decimal"
-                placeholder={mode === "PERCENT" ? "0.00 %" : "0.00"}
-                value={salaries}
-                onChange={handleInput(setSalaries, mode === "PERCENT")}
-                className="w-full bg-transparent text-sm font-bold text-[#120D26] outline-none"
-              />
-            </div>
-          </div>
-
-          {/* 3. Business Reinvestment */}
-          <div className="bg-white rounded-2xl p-4 border border-[#F2F0F5] focus-within:border-[#5F33E1] transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[#EDE8FB] flex items-center justify-center text-[#5F33E1]">
-                  <TrendUpIcon className="w-4 h-4 text-[#5F33E1]" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-[#120D26]">Store Expansion & CapEx</h4>
-                  <p className="text-[10px] text-[#99969E]">Shelving, deep freezers, interiors</p>
-                </div>
-              </div>
-              <span className="text-xs font-extrabold text-[#5F33E1]">
-                {formatINR(amtReinvestment)}
-              </span>
-            </div>
-            <div className="flex items-center border border-[#F2F0F5] rounded-xl px-3 py-2 bg-[#F8F9FA]">
-              <span className="text-xs font-bold text-[#99969E] mr-2">
-                {mode === "PERCENT" ? "%" : "₹"}
-              </span>
-              <input
-                type="text"
-                inputMode="decimal"
-                placeholder={mode === "PERCENT" ? "0.00 %" : "0.00"}
-                value={reinvestment}
-                onChange={handleInput(setReinvestment, mode === "PERCENT")}
-                className="w-full bg-transparent text-sm font-bold text-[#120D26] outline-none"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* 4. Physical Cash Movement: Partner Payout */}
-        <div className="space-y-3 pt-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#5F33E1]">
-              Physical Cash Movement (Leaves Store)
-            </span>
-            <span className="text-[10px] bg-[#EDE8FB] text-[#5F33E1] font-bold px-2 py-0.5 rounded-full">
-              Triggers Ledger Entry
-            </span>
-          </div>
-
-          <div className="bg-white rounded-2xl p-4 border-2 border-[#5F33E1] shadow-xs">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[#5F33E1] flex items-center justify-center text-white">
-                  <BriefcaseIcon className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-[#120D26]">Partner Profit Payout</h4>
-                  <p className="text-[10px] text-[#99969E]">Withdrawal to personal account</p>
-                </div>
-              </div>
-              <span className="text-xs font-black text-[#5F33E1]">
-                {formatINR(amtPayout)}
-              </span>
-            </div>
-
-            <div className="flex items-center border border-[#F2F0F5] rounded-xl px-3 py-2 bg-[#F8F9FA] focus-within:border-[#5F33E1]">
-              <span className="text-xs font-bold text-[#99969E] mr-2">
-                {mode === "PERCENT" ? "%" : "₹"}
-              </span>
-              <input
-                type="text"
-                inputMode="decimal"
-                placeholder={mode === "PERCENT" ? "0.00 %" : "0.00"}
-                value={payout}
-                onChange={handleInput(setPayout, mode === "PERCENT")}
-                className="w-full bg-transparent text-sm font-bold text-[#120D26] outline-none"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* FIX #1: Account-Level Overdraft Protection */}
-        {amtPayout > 0 && (
-          <div className="bg-white rounded-2xl p-4 border border-[#F2F0F5] space-y-2">
-            <label className="block text-xs font-bold text-[#120D26]">
-              Withdraw Payout From Account
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              {accounts.map((acc) => (
-                <button
-                  key={acc.id}
-                  type="button"
-                  onClick={() => setPayoutAccountId(acc.id)}
-                  className={`p-2.5 rounded-xl border text-left transition-all ${
-                    payoutAccountId === acc.id
-                      ? "border-[#5F33E1] bg-[#EDE8FB]/60"
-                      : "border-[#F2F0F5] bg-[#F8F9FA] hover:bg-gray-100"
+                <p
+                  className={`text-3xl font-black ${
+                    isOverAllocated || isOverdraft
+                      ? "text-[#DC2626] dark:text-red-400"
+                      : "text-[#5F33E1] dark:text-[#9F87EF]"
                   }`}
                 >
-                  <p className="text-[11px] font-bold text-[#120D26] truncate">{acc.name}</p>
-                  <p className="text-[10px] text-[#99969E] mt-0.5">
-                    {formatINR(acc.balance)}
+                  {formatINR(Math.abs(unallocated))}
+                </p>
+
+                {isOverAllocated && (
+                  <p className="text-xs text-[#DC2626] dark:text-red-400 mt-2 font-bold flex items-center gap-1">
+                    <AlertTriangleIcon className="w-3.5 h-3.5 shrink-0" />
+                    <span>
+                      Total allocations exceed net profit by {formatINR(Math.abs(unallocated))}.
+                    </span>
                   </p>
+                )}
+
+                {!isOverAllocated && !isOverdraft && unallocated > 0 && (
+                  <p className="text-[11px] text-[#99969E] dark:text-[#8C879B] mt-2 font-medium">
+                    This amount is not withdrawn or ring-fenced; it naturally remains as working capital across your payment accounts.
+                  </p>
+                )}
+              </div>
+
+              {/* Desktop Submit Button (visible on desktop) */}
+              <div className="hidden lg:block pt-1">
+                <button
+                  onClick={handleSubmit}
+                  disabled={!canSubmit}
+                  className="w-full py-4 rounded-2xl text-base font-extrabold text-white bg-[#5F33E1] dark:bg-[#7C5CE8] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all shadow-lg shadow-[#5F33E1]/25 dark:shadow-[#7C5CE8]/20 hover:bg-[#5029C9] dark:hover:bg-[#6A48D7] flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <SpinnerIcon className="w-5 h-5 text-white animate-spin" />
+                      <span>Closing Month & Saving Snapshot...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckIcon className="w-5 h-5 text-white" />
+                      <span>Lock Month & Confirm Closure</span>
+                    </>
+                  )}
                 </button>
-              ))}
+              </div>
             </div>
 
-            {isOverdraft && (
-              <p className="text-xs text-[#DC2626] font-bold mt-2 flex items-center gap-1">
-                <AlertTriangleIcon className="w-3.5 h-3.5 shrink-0" />
-                <span>
-                  Payout ({formatINR(amtPayout)}) exceeds {selectedAccount.name} balance (
-                  {formatINR(selectedAccount.balance)}). Overdraft prevented.
+            {/* RIGHT COLUMN: Allocation Buckets & Cash Payout (lg:col-span-7) */}
+            <div className="lg:col-span-7 space-y-4">
+              
+              {/* Allocation Buckets */}
+              <div className="space-y-3">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#99969E] dark:text-[#8C879B]">
+                  Retained Earnings Designations
                 </span>
-              </p>
-            )}
+
+                {/* 1. Operating Expense Reserve */}
+                <div className="bg-white dark:bg-[#161324] rounded-2xl p-4 border border-[#F2F0F5] dark:border-[#28233D] focus-within:border-[#5F33E1] dark:focus-within:border-[#7C5CE8] transition-all shadow-xs">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-[#EDE8FB] dark:bg-[#29204E] flex items-center justify-center text-[#5F33E1] dark:text-[#9F87EF]">
+                        <WalletIcon className="w-4 h-4 text-[#5F33E1] dark:text-[#9F87EF]" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-[#120D26] dark:text-[#F4F3F8]">Next Month OpEx Reserve</h4>
+                        <p className="text-[10px] text-[#99969E] dark:text-[#8C879B]">Rent, electricity & utilities</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-extrabold text-[#5F33E1] dark:text-[#9F87EF]">
+                      {formatINR(amtOpex)}
+                    </span>
+                  </div>
+                  <div className="flex items-center border border-[#F2F0F5] dark:border-[#28233D] rounded-xl px-3 py-2 bg-[#F8F9FA] dark:bg-[#1F1B30] transition-colors">
+                    <span className="text-xs font-bold text-[#99969E] dark:text-[#8C879B] mr-2">
+                      {mode === "PERCENT" ? "%" : "₹"}
+                    </span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder={mode === "PERCENT" ? "0.00 %" : "0.00"}
+                      value={opex}
+                      onChange={handleInput(setOpex, mode === "PERCENT")}
+                      className="w-full bg-transparent text-sm font-bold text-[#120D26] dark:text-[#F4F3F8] placeholder-[#99969E] dark:placeholder-[#8C879B] outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* 2. Salary Reserve */}
+                <div className="bg-white dark:bg-[#161324] rounded-2xl p-4 border border-[#F2F0F5] dark:border-[#28233D] focus-within:border-[#5F33E1] dark:focus-within:border-[#7C5CE8] transition-all shadow-xs">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-[#EDE8FB] dark:bg-[#29204E] flex items-center justify-center text-[#5F33E1] dark:text-[#9F87EF]">
+                        <UserOctagonIcon className="w-4 h-4 text-[#5F33E1] dark:text-[#9F87EF]" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-[#120D26] dark:text-[#F4F3F8]">Staff Salaries Reserve</h4>
+                        <p className="text-[10px] text-[#99969E] dark:text-[#8C879B]">Retained in bank for payroll</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-extrabold text-[#5F33E1] dark:text-[#9F87EF]">
+                      {formatINR(amtSalaries)}
+                    </span>
+                  </div>
+                  <div className="flex items-center border border-[#F2F0F5] dark:border-[#28233D] rounded-xl px-3 py-2 bg-[#F8F9FA] dark:bg-[#1F1B30] transition-colors">
+                    <span className="text-xs font-bold text-[#99969E] dark:text-[#8C879B] mr-2">
+                      {mode === "PERCENT" ? "%" : "₹"}
+                    </span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder={mode === "PERCENT" ? "0.00 %" : "0.00"}
+                      value={salaries}
+                      onChange={handleInput(setSalaries, mode === "PERCENT")}
+                      className="w-full bg-transparent text-sm font-bold text-[#120D26] dark:text-[#F4F3F8] placeholder-[#99969E] dark:placeholder-[#8C879B] outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* 3. Business Reinvestment */}
+                <div className="bg-white dark:bg-[#161324] rounded-2xl p-4 border border-[#F2F0F5] dark:border-[#28233D] focus-within:border-[#5F33E1] dark:focus-within:border-[#7C5CE8] transition-all shadow-xs">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-[#EDE8FB] dark:bg-[#29204E] flex items-center justify-center text-[#5F33E1] dark:text-[#9F87EF]">
+                        <TrendUpIcon className="w-4 h-4 text-[#5F33E1] dark:text-[#9F87EF]" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-[#120D26] dark:text-[#F4F3F8]">Store Expansion & CapEx</h4>
+                        <p className="text-[10px] text-[#99969E] dark:text-[#8C879B]">Shelving, deep freezers, interiors</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-extrabold text-[#5F33E1] dark:text-[#9F87EF]">
+                      {formatINR(amtReinvestment)}
+                    </span>
+                  </div>
+                  <div className="flex items-center border border-[#F2F0F5] dark:border-[#28233D] rounded-xl px-3 py-2 bg-[#F8F9FA] dark:bg-[#1F1B30] transition-colors">
+                    <span className="text-xs font-bold text-[#99969E] dark:text-[#8C879B] mr-2">
+                      {mode === "PERCENT" ? "%" : "₹"}
+                    </span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder={mode === "PERCENT" ? "0.00 %" : "0.00"}
+                      value={reinvestment}
+                      onChange={handleInput(setReinvestment, mode === "PERCENT")}
+                      className="w-full bg-transparent text-sm font-bold text-[#120D26] dark:text-[#F4F3F8] placeholder-[#99969E] dark:placeholder-[#8C879B] outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Physical Cash Movement: Partner Payout */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#5F33E1] dark:text-[#9F87EF]">
+                    Physical Cash Movement (Leaves Store)
+                  </span>
+                  <span className="text-[10px] bg-[#EDE8FB] dark:bg-[#29204E] text-[#5F33E1] dark:text-[#9F87EF] font-bold px-2 py-0.5 rounded-full">
+                    Triggers Ledger Entry
+                  </span>
+                </div>
+
+                <div className="bg-white dark:bg-[#161324] rounded-2xl p-4 border-2 border-[#5F33E1] dark:border-[#7C5CE8] shadow-xs transition-colors">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-[#5F33E1] dark:bg-[#7C5CE8] flex items-center justify-center text-white">
+                        <BriefcaseIcon className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-[#120D26] dark:text-[#F4F3F8]">Partner Profit Payout</h4>
+                        <p className="text-[10px] text-[#99969E] dark:text-[#8C879B]">Withdrawal to personal account</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-black text-[#5F33E1] dark:text-[#9F87EF]">
+                      {formatINR(amtPayout)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center border border-[#F2F0F5] dark:border-[#28233D] rounded-xl px-3 py-2 bg-[#F8F9FA] dark:bg-[#1F1B30] focus-within:border-[#5F33E1] dark:focus-within:border-[#7C5CE8] transition-colors">
+                    <span className="text-xs font-bold text-[#99969E] dark:text-[#8C879B] mr-2">
+                      {mode === "PERCENT" ? "%" : "₹"}
+                    </span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder={mode === "PERCENT" ? "0.00 %" : "0.00"}
+                      value={payout}
+                      onChange={handleInput(setPayout, mode === "PERCENT")}
+                      className="w-full bg-transparent text-sm font-bold text-[#120D26] dark:text-[#F4F3F8] placeholder-[#99969E] dark:placeholder-[#8C879B] outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Account-Level Overdraft Protection */}
+              {amtPayout > 0 && (
+                <div className="bg-white dark:bg-[#161324] rounded-2xl p-4 border border-[#F2F0F5] dark:border-[#28233D] space-y-2 shadow-xs transition-colors">
+                  <label className="block text-xs font-bold text-[#120D26] dark:text-[#F4F3F8]">
+                    Withdraw Payout From Account
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                    {accounts.map((acc) => (
+                      <button
+                        key={acc.id}
+                        type="button"
+                        onClick={() => setPayoutAccountId(acc.id)}
+                        className={`p-2.5 rounded-xl border text-left transition-all ${
+                          payoutAccountId === acc.id
+                            ? "border-[#5F33E1] dark:border-[#7C5CE8] bg-[#EDE8FB]/60 dark:bg-[#29204E]/60 text-[#120D26] dark:text-[#F4F3F8]"
+                            : "border-[#F2F0F5] dark:border-[#28233D] bg-[#F8F9FA] dark:bg-[#1F1B30] text-[#120D26] dark:text-[#F4F3F8] hover:bg-gray-100 dark:hover:bg-[#29204E]"
+                        }`}
+                      >
+                        <p className="text-[11px] font-bold truncate">{acc.name}</p>
+                        <p className="text-[10px] text-[#99969E] dark:text-[#8C879B] mt-0.5">
+                          {formatINR(acc.balance)}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+
+                  {isOverdraft && (
+                    <p className="text-xs text-[#DC2626] dark:text-red-400 font-bold mt-2 flex items-center gap-1">
+                      <AlertTriangleIcon className="w-3.5 h-3.5 shrink-0" />
+                      <span>
+                        Payout ({formatINR(amtPayout)}) exceeds {selectedAccount.name} balance (
+                        {formatINR(selectedAccount.balance)}). Overdraft prevented.
+                      </span>
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        )}
-
-        {/* Unallocated Retained Earnings Status Card */}
-        <div
-          className={`p-5 rounded-2xl border transition-all ${
-            isOverAllocated || isOverdraft
-              ? "bg-[#FEF2F2] border-[#FEE2E2]"
-              : "bg-white border-[#F2F0F5] shadow-sm"
-          }`}
-        >
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-extrabold text-[#120D26]">
-              Unallocated Retained Earnings
-            </span>
-            <span className="text-[10px] text-[#99969E] font-medium">
-              Stays in Business Accounts
-            </span>
-          </div>
-
-          <p
-            className={`text-3xl font-black ${
-              isOverAllocated || isOverdraft ? "text-[#DC2626]" : "text-[#5F33E1]"
-            }`}
-          >
-            {formatINR(Math.abs(unallocated))}
-          </p>
-
-          {isOverAllocated && (
-            <p className="text-xs text-[#DC2626] mt-2 font-bold flex items-center gap-1">
-              <AlertTriangleIcon className="w-3.5 h-3.5 shrink-0" />
-              <span>
-                Total allocations exceed net profit by {formatINR(Math.abs(unallocated))}.
-              </span>
-            </p>
-          )}
-
-          {!isOverAllocated && !isOverdraft && unallocated > 0 && (
-            <p className="text-[11px] text-[#99969E] mt-2 font-medium">
-              This amount is not withdrawn or ring-fenced; it naturally remains as working
-              capital in your business.
-            </p>
-          )}
         </div>
       </main>
 
-      {/* Sticky Footer */}
-      <footer className="p-5 pt-3 pb-8 border-t border-[#F2F0F5] bg-white shrink-0">
+      {/* Sticky Footer for Mobile (Hidden on Desktop because desktop has the button in the sticky left summary column) */}
+      <footer className="lg:hidden p-4 border-t border-[#F2F0F5] dark:border-[#28233D] bg-white dark:bg-[#161324] shrink-0 transition-colors">
         <button
           onClick={handleSubmit}
           disabled={!canSubmit}
-          className="w-full py-4 rounded-2xl text-base font-extrabold text-white bg-[#5F33E1] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all shadow-lg shadow-[#5F33E1]/25 hover:bg-[#5029C9] flex items-center justify-center gap-2"
+          className="w-full py-3.5 rounded-2xl text-base font-extrabold text-white bg-[#5F33E1] dark:bg-[#7C5CE8] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all shadow-lg shadow-[#5F33E1]/25 dark:shadow-[#7C5CE8]/20 hover:bg-[#5029C9] dark:hover:bg-[#6A48D7] flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
             <>
               <SpinnerIcon className="w-5 h-5 text-white animate-spin" />
-              <span>Closing Month & Saving Snapshot...</span>
+              <span>Closing Month...</span>
             </>
           ) : (
             <>
